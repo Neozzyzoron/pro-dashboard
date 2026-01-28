@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notion Widget V6</title>
+    <title>Notion Widget V7</title>
     <style>
         :root {
             --bg-color: #FFFFFF; --text-color: #37352F; --accent-color: #E3E2E0;
@@ -145,37 +145,13 @@
         function renderDateDisplay(data, parent) { 
             parent.innerHTML = `<div class="date-display" id="date-main-${parent.id}"></div><div class="date-sub" id="date-sub-${parent.id}"></div>`; 
         }
-        
-        function renderProgressGroup(data, parent) { 
-            data.items.forEach(item => { 
-                // Visibility Toggle Check
-                if (item.visible !== false) {
-                    // Life Logic vs Regular Logic
-                    let dates;
-                    if(item.type === 'life') {
-                        // Calculated in loop, just pass placeholder
-                        const start = new Date(item.dob || '1990-01-01');
-                        const end = new Date(start);
-                        end.setFullYear(end.getFullYear() + parseInt(item.expectancy || 80));
-                        dates = { start, end };
-                    } else {
-                        dates = getDatesForType(item.type);
-                    }
-                    
-                    if(dates) parent.appendChild(createBarElement(item.label, dates.start, dates.end, false)); 
-                }
-            }); 
-        }
-        
+        function renderProgressGroup(data, parent) { data.items.forEach(item => { const dates = getDatesForType(item.type); if(dates) parent.appendChild(createBarElement(item.label, dates.start, dates.end, false)); }); }
         function renderCustomBar(data, parent) { parent.appendChild(createBarElement(data.label, new Date(data.start), new Date(data.end), false)); }
-        
         function renderCycleProgress(data, parent, id) { 
             const wrapper = createBarElement(data.label, null, null, true, `block-${id}`);
             parent.appendChild(wrapper);
         }
-        
         function renderCountdown(data, parent) { parent.innerHTML = `<div class="countdown-row"><span class="countdown-label">${data.label}</span><span class="countdown-time" id="cnt-${parent.id}">--</span></div>`; }
-        
         function renderTimer(data, parent, id) {
             const hrs = parseInt(data.hours)||0; const mins = parseInt(data.minutes)||0; const total = (hrs*60)+mins; const label = hrs>0 ? `${hrs}h ${mins}m` : `${mins}m`;
             parent.innerHTML = `<div class="timer-container"><div style="font-size:0.8em; opacity:0.7;">${data.label||'Timer'}</div><div class="timer-display" id="timer-display-${id}">00:00</div><div class="timer-controls"><button class="timer-btn" onclick="startTimer(${id}, ${total})">Start ${label}</button><button class="timer-btn" style="color:#eb5757" onclick="stopTimer(${id})">Stop</button></div></div>`;
@@ -266,6 +242,7 @@
             });
         }
 
+        // --- HELPERS ---
         function buildDateString(tokens, now) {
             return tokens.map(t => {
                 const type = (typeof t === 'string') ? t : t.type;
@@ -274,6 +251,7 @@
                     case 'day_name_short': return now.toLocaleDateString([], {weekday:'short'});
                     case 'month_full': return now.toLocaleDateString([], {month:'long'});
                     case 'month_short': return now.toLocaleDateString([], {month:'short'});
+                    case 'month_num': return (now.getMonth() + 1).toString().padStart(2, '0'); // NEW: Month Number
                     case 'date_num': return now.getDate();
                     case 'year': return now.getFullYear();
                     case 'week_num': return `Week ${getWeekNumber(now)}`;
@@ -283,7 +261,6 @@
                         return `Day ${getDayOfYear(now)} of ${isLeap ? 366 : 365}`;
                     case 'quarter': return `Q${Math.floor((now.getMonth() + 3) / 3)}`;
                     case 'separator': return '|';
-                    case 'comma': return ',';
                     default: return '';
                 }
             }).join(' ');
