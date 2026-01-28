@@ -1,1 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Widget Admin V1</title>
+    <style>
+        /* CORE LAYOUT */
+        body { margin: 0; padding: 0; height: 100vh; display: flex; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f7f7f5; color: #37352f; overflow: hidden; }
+        .panel-left { width: 50%; padding: 25px; overflow-y: auto; border-right: 1px solid #e0e0e0; background: #fff; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px;}
+        .panel-right { width: 50%; background: #eef0f2; display: flex; flex-direction: column; padding: 25px; box-sizing: border-box; }
+        
+        /* PREVIEW */
+        .preview-wrapper { flex-grow: 1; background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden; border: 1px solid #ccc; display: flex; flex-direction: column; }
+        .preview-toolbar { padding: 10px; background: #dfe1e6; border-bottom: 1px solid #ccc; display: flex; justify-content: center; align-items: center; }
+        .preview-label { font-size: 0.75rem; font-weight: bold; color: #555; text-transform: uppercase; letter-spacing: 1px;}
+        iframe { flex-grow: 1; width: 100%; border: none; background: white; }
 
+        /* EDITOR STYLES */
+        h1 { margin: 0; font-size: 1.5rem; letter-spacing: -0.5px; }
+        h2 { font-size: 0.85rem; color: #999; text-transform: uppercase; margin: 0 0 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px; letter-spacing: 0.5px; font-weight: 600;}
+        
+        /* LINK GEN */
+        .action-area { padding: 15px; background: #2c3e50; border-radius: 8px; color: white; }
+        .link-box { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px; font-family: monospace; font-size: 0.75rem; word-break: break-all; margin-bottom: 10px; max-height: 45px; overflow-y: auto; color: #aeb6bf; }
+        .action-btns { display: flex; gap: 8px; }
+        .btn-action { padding: 10px; font-size: 0.8rem; color: white; border-radius: 4px; border:none; cursor: pointer; font-weight: 600; transition: background 0.2s; }
+        .btn-refresh { background: #3498db; flex: 2; } .btn-refresh:hover { background: #2980b9; }
+        .btn-copy { background: #34495e; flex: 2; border: 1px solid #566573; } .btn-copy:hover { background: #2c3e50; }
+        .btn-open { background: #7f8c8d; flex: 0; min-width: 40px; font-size: 1.2rem; padding: 0; display:flex; align-items:center; justify-content:center;} .btn-open:hover { background: #95a5a6; }
+
+        /* BLOCKS */
+        .block-card { background: white; border: 1px solid #e0e0e0; border-radius: 6px; margin-bottom: 8px; border-left: 4px solid #999; transition: all 0.2s; }
+        .block-card.dragging { opacity: 0.5; border: 2px dashed #999; }
+        .block-header { padding: 10px 15px; cursor: pointer; display: flex; align-items: center; gap: 10px; background: #fbfbfa; user-select: none; }
+        .block-header:hover { background: #f2f2f2; }
+        .block-title { font-weight: 600; font-size: 0.85rem; flex-grow: 1; text-transform: uppercase; color: #555; }
+        .toggle-icon { font-size: 0.7rem; color: #bbb; transition: transform 0.2s; }
+        .block-card.open .toggle-icon { transform: rotate(180deg); }
+        .block-content { padding: 15px; border-top: 1px solid #f0f0f0; display: none; }
+        .block-card.open .block-content { display: block; }
+        
+        /* Dynamic List Items (No-Code) */
+        .sub-list { margin-bottom: 10px; border: 1px solid #eee; padding: 10px; border-radius: 4px; background: #fafafa; }
+        .sub-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }
+        .sub-btn-add { background: #e0e0e0; border: none; font-size: 0.7rem; padding: 4px 8px; cursor: pointer; border-radius: 3px; }
+        .sub-btn-rem { background: #ffdede; color: red; border: none; cursor: pointer; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+
+        /* Colors & Layout */
+        .type-header { border-left-color: #bdc3c7; } .type-world_clock { border-left-color: #1abc9c; }
+        .type-date_display { border-left-color: #2ecc71; } .type-progress_group { border-left-color: #e67e22; }
+        .type-progress_custom { border-left-color: #f1c40f; } .type-progress_cycle { border-left-color: #9b59b6; }
+        .type-countdown { border-left-color: #3498db; } .type-timer { border-left-color: #e74c3c; }
+
+        /* Inputs */
+        .settings-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        label { display: block; margin-bottom: 4px; font-weight: 500; font-size: 0.75rem; color: #666;}
+        input, select, textarea { width: 100%; padding: 6px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem; box-sizing: border-box; background: #fff; }
+        input:focus, select:focus, textarea:focus { border-color: #2ecc71; outline: none; }
+        .row { display: flex; gap: 10px; margin-top: 10px; } .col { flex: 1; }
+        .viz-controls { background: #f9f9f9; padding: 10px; border-radius: 4px; margin-top: 10px; border: 1px solid #eee; }
+
+        /* Buttons */
+        .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+        button { padding: 8px 12px; border: none; border-radius: 4px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: transform 0.1s; }
+        button:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-header { background: #ecf0f1; color: #7f8c8d; } .btn-time { background: #d1f2eb; color: #0e6251; }
+        .btn-date { background: #d5f5e3; color: #196f3d; } .btn-auto { background: #fdebd0; color: #935116; }
+        .btn-custom { background: #fcf3cf; color: #7d6608; } .btn-cycle { background: #ebdef0; color: #5b2c6f; }
+        .btn-count { background: #d6eaf8; color: #154360; } .btn-timer { background: #fadbd8; color: #78281f; }
+        .btn-del { background: transparent; color: #c0392b; border: 1px solid #e74c3c; padding: 3px 6px; font-size: 0.65rem; }
+    </style>
+</head>
+<body>
+
+<div class="panel-left">
+    <div class="action-area">
+        <label style="color:#aaa; font-size:0.7rem;">WIDGET LINK</label>
+        <div class="link-box" id="result-url">Generate...</div>
+        <div class="action-btns">
+            <button class="btn-action btn-refresh" onclick="refreshPreview()">↻ REFRESH PREVIEW</button>
+            <button class="btn-action btn-copy" id="btn-copy" onclick="copyLink()">COPY LINK</button>
+            <button class="btn-action btn-open" onclick="window.open(generateLink(), '_blank')" title="Open in New Tab">⬈</button>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Global Settings</h2>
+        <div class="settings-grid">
+            <div><label>Time</label><select id="set-time" onchange="updateState()"><option value="12">12 Hour</option><option value="24">24 Hour</option></select></div>
+            <div><label>Theme</label><select id="set-theme" onchange="updateState()"><option value="standard">Standard</option><option value="minimal">Minimal</option><option value="card">Cards</option></select></div>
+            <div><label>Font Size</label><select id="set-font" onchange="updateState()"><option value="standard">Standard</option><option value="small">Small</option><option value="large">Large</option></select></div>
+        </div>
+    </div>
+
+    <div class="section" style="flex-grow:1; display:flex; flex-direction:column;">
+        <h2>Blocks</h2>
+        <div id="blocks-area"></div>
+        <div class="btn-row" style="margin-top:15px;">
+            <button class="btn-header" onclick="addBlock('header')">+ Text</button>
+            <button class="btn-time" onclick="addBlock('world_clock')">+ Clocks</button>
+            <button class="btn-date" onclick="addBlock('date_display')">+ Date</button>
+            <button class="btn-auto" onclick="addBlock('progress_group')">+ Auto Progress</button>
+            <button class="btn-custom" onclick="addBlock('progress_custom')">+ Goal</button>
+            <button class="btn-cycle" onclick="addBlock('progress_cycle')">+ Cycle</button>
+            <button class="btn-count" onclick="addBlock('countdown')">+ Countdown</button>
+            <button class="btn-timer" onclick="addBlock('timer')">+ Timer</button>
+        </div>
+    </div>
+</div>
+
+<div class="panel-right">
+    <div class="preview-wrapper">
+        <div class="preview-toolbar"><span class="preview-label">Live Preview</span></div>
+        <iframe id="preview-frame" src=""></iframe>
+    </div>
+</div>
+
+<script>
+    let settings = { use24h: false, theme: 'standard', fontSize: 'standard' };
+    let blocks = [];
+    
+    // --- INIT ---
+    function init() {
+        try {
+            const hash = window.location.hash.substring(1);
+            if(hash) {
+                const data = JSON.parse(atob(hash));
+                settings = data.settings || settings;
+                blocks = data.blocks || blocks;
+                
+                // Set Inputs
+                document.getElementById('set-time').value = settings.use24h ? '24' : '12';
+                document.getElementById('set-theme').value = settings.theme;
+                document.getElementById('set-font').value = settings.fontSize;
+            }
+        } catch(e) {}
+        renderBlocks();
+        refreshPreview();
+    }
+
+    // --- REFRESH ---
+    window.refreshPreview = () => {
+        const raw = generateLink();
+        const parts = raw.split('#');
+        // Add timestamp to query param to force refresh
+        document.getElementById('preview-frame').src = `${parts[0]}?t=${Date.now()}#${parts[1]}`;
+    };
+
+    // --- RENDER ---
+    function renderBlocks() {
+        const area = document.getElementById('blocks-area');
+        area.innerHTML = '';
+
+        blocks.forEach((block, index) => {
+            const div = document.createElement('div');
+            div.className = `block-card type-${block.type}`;
+            div.draggable = true;
+            div.dataset.index = index;
+
+            div.addEventListener('dragstart', function(e) { this.classList.add('dragging'); e.dataTransfer.setData('text/plain', index); });
+            div.addEventListener('dragover', e => e.preventDefault());
+            div.addEventListener('drop', handleDrop);
+
+            // Title Logic
+            let title = block.type.toUpperCase().replace('_',' ');
+            if(block.type === 'world_clock') title = "CLOCKS";
+            let label = block.label || block.text || title;
+
+            let html = `
+                <div class="block-header" onclick="this.parentElement.classList.toggle('open')">
+                    <span style="color:#ccc;">☰</span>
+                    <span class="block-title">${title} <span style="opacity:0.5; text-transform:none; margin-left:8px;">${label.substring(0,20)}</span></span>
+                    <button class="btn-del" onclick="removeBlock(${index})">DEL</button>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="block-content">
+            `;
+
+            // --- INPUTS ---
+            if (block.type === 'header') html += `<label>Text</label><input type="text" value="${block.text}" oninput="updateBlock(${index}, 'text', this.value)">`;
+            
+            else if (block.type === 'world_clock') {
+                html += `<label>Locations</label><div class="sub-list" id="sub-list-${index}"></div>`;
+                html += `<button class="sub-btn-add" onclick="addSubItem(${index}, 'locations')">+ Add City</button>`;
+            }
+            
+            else if (block.type === 'date_display') {
+                 html += `<label>Format</label><select onchange="updateBlock(${index}, 'style', this.value)">
+                    <option value="full" ${block.style=='full'?'selected':''}>Full (Wed, Jan 28)</option>
+                    <option value="simple" ${block.style=='simple'?'selected':''}>Simple (Jan 28)</option>
+                    <option value="week" ${block.style=='week'?'selected':''}>Week Number</option>
+                 </select>`;
+            }
+
+            else if (block.type === 'progress_group') {
+                html += `<label>Enabled Bars</label><div class="sub-list" id="sub-list-${index}"></div>`;
+                html += `<button class="sub-btn-add" onclick="addSubItem(${index}, 'items')">+ Add Bar</button>`;
+            }
+
+            else if (block.type === 'progress_custom') html += `<label>Label</label><input type="text" value="${block.label}" oninput="updateBlock(${index}, 'label', this.value)"><div class="row"><div class="col"><label>Start</label><input type="date" value="${block.start}" oninput="updateBlock(${index}, 'start', this.value)"></div><div class="col"><label>End</label><input type="date" value="${block.end}" oninput="updateBlock(${index}, 'end', this.value)"></div></div>`;
+            
+            else if (block.type === 'progress_cycle') html += `<label>Label</label><input type="text" value="${block.label}" oninput="updateBlock(${index}, 'label', this.value)"><div class="row"><div class="col"><label>Anchor</label><input type="date" value="${block.anchor}" oninput="updateBlock(${index}, 'anchor', this.value)"></div><div class="col"><label>Days</label><input type="number" value="${block.days}" oninput="updateBlock(${index}, 'days', this.value)"></div></div>`;
+            
+            else if (block.type === 'countdown') html += `<label>Label</label><input type="text" value="${block.label}" oninput="updateBlock(${index}, 'label', this.value)"><div class="row"><div class="col"><label>Target Date</label><input type="date" value="${block.date}" oninput="updateBlock(${index}, 'date', this.value)"></div><div class="col"><label>Format</label><select onchange="updateBlock(${index}, 'style', this.value)"><option value="standard" ${block.style=='standard'?'selected':''}>Standard (5 Days)</option><option value="precise" ${block.style=='precise'?'selected':''}>Precise (5d 4h)</option><option value="full" ${block.style=='full'?'selected':''}>Full (5d 4h 30m)</option></select></div></div>`;
+            
+            else if (block.type === 'timer') html += `<label>Label</label><input type="text" value="${block.label}" oninput="updateBlock(${index}, 'label', this.value)"><div class="row"><div class="col"><label>Hours</label><input type="number" value="${block.hours}" oninput="updateBlock(${index}, 'hours', this.value)"></div><div class="col"><label>Minutes</label><input type="number" value="${block.minutes}" oninput="updateBlock(${index}, 'minutes', this.value)"></div></div>`;
+
+            // VISUALS
+            html += `
+                <div class="viz-controls">
+                    <div class="row" style="margin-top:0;">
+                        <div class="col">
+                            <label>Color</label>
+                            <div style="display:flex; gap:5px;">
+                                <select onchange="updateBlock(${index}, 'color', this.value)" style="flex:1;">
+                                    <option value="default">Default</option><option value="blue" ${block.color=='blue'?'selected':''}>Blue</option><option value="red" ${block.color=='red'?'selected':''}>Red</option><option value="green" ${block.color=='green'?'selected':''}>Green</option><option value="orange" ${block.color=='orange'?'selected':''}>Orange</option><option value="purple" ${block.color=='purple'?'selected':''}>Purple</option>
+                                </select>
+                                <input type="color" value="${block.color && block.color.startsWith('#')?block.color:'#000000'}" onchange="updateBlock(${index}, 'color', this.value)" style="width:30px;height:32px;">
+                            </div>
+                        </div>
+                        <div class="col"><label>Width</label><select onchange="updateBlock(${index}, 'width', this.value)"><option value="100">Full</option><option value="50" ${block.width=='50'?'selected':''}>Half</option></select></div>
+                    </div>
+                </div></div>`;
+            
+            div.innerHTML = html;
+            area.appendChild(div);
+
+            // Render Sub-Lists (No-Code Form Builder)
+            if(block.type === 'world_clock') renderSubList(index, 'locations', block.locations, ['Label', 'Timezone']);
+            if(block.type === 'progress_group') renderSubList(index, 'items', block.items, ['Label', 'Type']);
+        });
+    }
+
+    // --- NO-CODE SUB-LIST BUILDER ---
+    function renderSubList(bIdx, key, array, fields) {
+        const container = document.getElementById(`sub-list-${bIdx}`);
+        if(!container) return;
+        container.innerHTML = '';
+        array.forEach((item, iIdx) => {
+            const row = document.createElement('div');
+            row.className = 'sub-item';
+            
+            // First Input
+            const in1 = document.createElement('input'); in1.placeholder = fields[0]; in1.value = item.label || '';
+            in1.oninput = (e) => updateSubItem(bIdx, key, iIdx, 'label', e.target.value);
+            
+            // Second Input (Select or Text)
+            let in2;
+            if (key === 'items') { // Progress Type
+                in2 = document.createElement('select');
+                ['day','week','month','year'].forEach(opt => { in2.innerHTML += `<option value="${opt}" ${item.type==opt?'selected':''}>${opt}</option>`; });
+                in2.onchange = (e) => updateSubItem(bIdx, key, iIdx, 'type', e.target.value);
+            } else { // Timezone
+                in2 = document.createElement('input'); in2.placeholder = fields[1]; in2.value = item.timezone || '';
+                in2.oninput = (e) => updateSubItem(bIdx, key, iIdx, 'timezone', e.target.value);
+            }
+
+            const del = document.createElement('button'); del.className = 'sub-btn-rem'; del.innerText = '×';
+            del.onclick = () => removeSubItem(bIdx, key, iIdx);
+
+            row.appendChild(in1); row.appendChild(in2); row.appendChild(del);
+            container.appendChild(row);
+        });
+    }
+
+    // --- ACTIONS ---
+    window.updateState = () => {
+        settings.use24h = document.getElementById('set-time').value === '24';
+        settings.theme = document.getElementById('set-theme').value;
+        settings.fontSize = document.getElementById('set-font').value;
+        generateLink();
+    };
+
+    window.updateBlock = (i, k, v) => { blocks[i][k] = v; updateState(); };
+    window.updateSubItem = (bI, k, iI, f, v) => { blocks[bI][k][iI][f] = v; updateState(); };
+    window.addSubItem = (bI, k) => { 
+        if(k==='locations') blocks[bI][k].push({label:'New City', timezone:'UTC'});
+        if(k==='items') blocks[bI][k].push({label:'New Bar', type:'month'});
+        renderBlocks(); updateState();
+    };
+    window.removeSubItem = (bI, k, iI) => { blocks[bI][k].splice(iI, 1); renderBlocks(); updateState(); };
+    window.addBlock = (t) => {
+        let b = { type: t };
+        if(t=='header') b.text='Title';
+        if(t=='world_clock') b.locations=[{label:'London',timezone:'Europe/London'}];
+        if(t=='date_display') b.style='full';
+        if(t=='progress_group') b.items=[{type:'year',label:'Year'}];
+        if(t=='progress_custom') { b.label='Goal'; b.start='2026-01-01'; b.end='2026-12-31'; }
+        if(t=='progress_cycle') { b.label='Cycle'; b.anchor='2026-01-01'; b.days='28'; }
+        if(t=='countdown') { b.label='Event'; b.date='2026-12-31'; b.style='standard'; }
+        if(t=='timer') { b.label='Focus'; b.hours=0; b.minutes=25; }
+        blocks.push(b); renderBlocks(); updateState();
+    };
+    window.removeBlock = (i) => { blocks.splice(i, 1); renderBlocks(); updateState(); };
+
+    // --- DRAG ---
+    function handleDrop(e) {
+        e.stopPropagation();
+        const s = parseInt(e.dataTransfer.getData('text/plain'));
+        const t = parseInt(this.dataset.index);
+        if(s !== t) {
+            const item = blocks[s]; blocks.splice(s, 1); blocks.splice(t, 0, item);
+            renderBlocks(); updateState();
+        }
+        return false;
+    }
+
+    // --- LINK ---
+    function generateLink() {
+        const json = JSON.stringify({ settings, blocks });
+        const encoded = btoa(json);
+        let url = window.location.href.split('#')[0].split('?')[0];
+        if(url.includes('admin.html')) url = url.replace('admin.html', 'index.html');
+        else if(url.endsWith('/')) url += 'index.html';
+        else url += '/index.html';
+        const final = `${url}#${encoded}`;
+        document.getElementById('result-url').innerText = final;
+        return final;
+    }
+    window.copyLink = () => { navigator.clipboard.writeText(document.getElementById('result-url').innerText); };
+
+    init();
+</script>
+</body>
+</html>
