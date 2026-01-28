@@ -2,58 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Widget Admin V11</title>
+    <title>Widget Admin V12</title>
     <style>
-        /* ... (Same CSS as above) ... */
-        /* RESET & CORE */
+        /* CORE LAYOUT */
         * { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f7f7f5; color: #37352f; }
-        
-        /* MAIN CONTAINER (Flex Row) */
-        .main-container { display: flex; width: 100%; height: 100vh; }
-        
-        /* LEFT PANEL (Editor) */
-        .panel-left { 
-            width: 50%; height: 100%; 
-            background: #fff; border-right: 1px solid #e0e0e0; 
-            display: flex; flex-direction: column; 
-        }
-        
-        /* RIGHT PANEL (Preview) */
-        .panel-right { 
-            width: 50%; height: 100%; 
-            background: #eef0f2; 
-            padding: 20px; 
-            display: flex; flex-direction: column; /* Stacks toolbar & frame */
-        }
-        
-        /* STICKY HEADER (Left) */
+        .panel-left { width: 50%; height: 100%; background: #fff; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; }
+        .panel-right { width: 50%; height: 100%; background: #eef0f2; padding: 25px; box-sizing: border-box; display: flex; flex-direction: column; }
         .sticky-header { padding: 20px 25px; background: white; border-bottom: 1px solid #f0f0f0; flex-shrink: 0; z-index: 10; }
         .scroll-content { padding: 20px 25px 40px 25px; overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; gap: 20px; }
         
-        /* PREVIEW FRAME CONTAINER */
-        .preview-wrapper { 
-            flex-grow: 1; 
-            background: white; 
-            border-radius: 8px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
-            border: 1px solid #ccc; 
-            display: flex; flex-direction: column;
-            overflow: hidden;
-            min-height: 0; 
-        }
-        
-        .preview-toolbar { 
-            padding: 8px; background: #dfe1e6; border-bottom: 1px solid #ccc; 
-            display: flex; justify-content: center; align-items: center; 
-            height: 30px; flex-shrink: 0;
-        }
+        /* PREVIEW */
+        .preview-wrapper { flex-grow: 1; background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 1px solid #ccc; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+        .preview-toolbar { padding: 8px; background: #dfe1e6; border-bottom: 1px solid #ccc; display: flex; justify-content: center; align-items: center; height: 30px; flex-shrink: 0; }
         .preview-label { font-size: 0.75rem; font-weight: bold; color: #555; text-transform: uppercase; letter-spacing: 1px;}
-        
-        /* IFRAME */
-        iframe { 
-            flex-grow: 1; width: 100%; border: none; background: white; display: block; 
-        }
+        iframe { flex-grow: 1; width: 100%; border: none; background: white; display: block; }
 
         /* UI ELEMENTS */
         h1 { margin: 0; font-size: 1.5rem; letter-spacing: -0.5px; }
@@ -61,7 +24,6 @@
         .dark-section { background: #34495e; padding: 15px; border-radius: 8px; color: white; flex-shrink: 0; }
         .dark-section h2 { color: rgba(255,255,255,0.7); border-bottom-color: rgba(255,255,255,0.2); }
         .dark-section label { color: rgba(255,255,255,0.9); }
-        
         .action-area { padding: 15px; background: #2c3e50; border-radius: 8px; color: white; }
         .link-box { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px; font-family: monospace; font-size: 0.75rem; word-break: break-all; margin-bottom: 10px; max-height: 45px; overflow-y: auto; color: #aeb6bf; }
         .action-btns { display: flex; gap: 8px; }
@@ -70,7 +32,7 @@
         .btn-copy { background: #27ae60; flex: 2; border: 1px solid #2ecc71; } .btn-copy:hover { background: #219150; }
         .btn-open { background: #7f8c8d; flex: 0; min-width: 40px; font-size: 1.2rem; padding: 0; display:flex; align-items:center; justify-content:center;} .btn-open:hover { background: #95a5a6; }
 
-        /* BLOCKS & LISTS */
+        /* BLOCKS */
         .block-card { background: white; border: 1px solid #e0e0e0; border-radius: 6px; margin-bottom: 8px; border-left: 4px solid #999; transition: all 0.2s; }
         .block-header { padding: 10px 15px; cursor: pointer; display: flex; align-items: center; gap: 10px; background: #fbfbfa; user-select: none; }
         .block-header:hover { background: #f2f2f2; }
@@ -80,12 +42,15 @@
         .block-content { padding: 15px; border-top: 1px solid #f0f0f0; display: none; }
         .block-card.open .block-content { display: block; }
         
+        /* LIST ITEMS */
         .sub-list { margin-bottom: 10px; border: 1px solid #eee; padding: 10px; border-radius: 4px; background: #fafafa; }
-        .sub-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; flex-wrap: nowrap; } 
+        .sub-item { display: flex; gap: 5px; margin-bottom: 8px; align-items: flex-start; flex-wrap: wrap; border-bottom: 1px solid #eee; padding-bottom: 8px;} 
+        .sub-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        
         .sub-item select, .sub-item input { flex-grow: 1; width: auto; min-width: 0; } 
         .sub-btn-add { background: #e0e0e0; border: none; font-size: 0.7rem; padding: 4px 8px; cursor: pointer; border-radius: 3px; }
-        .sub-btn-rem { background: #ffdede; color: red; border: none; cursor: pointer; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
-        .sub-btn-mov { background: #f0f0f0; border: 1px solid #ddd; cursor: pointer; width: 20px; height: 20px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: #666; flex-shrink: 0; }
+        .sub-btn-rem { background: #ffdede; color: red; border: none; cursor: pointer; width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
+        .sub-btn-mov { background: #f0f0f0; border: 1px solid #ddd; cursor: pointer; width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: #666; flex-shrink: 0; }
 
         .type-header { border-left-color: #bdc3c7; } .type-world_clock { border-left-color: #1abc9c; }
         .type-date_display { border-left-color: #2ecc71; } .type-progress_group { border-left-color: #e67e22; }
@@ -108,7 +73,7 @@
         .btn-count { background: #d6eaf8; color: #154360; } .btn-timer { background: #fadbd8; color: #78281f; }
         .btn-del { background: transparent; color: #c0392b; border: 1px solid #e74c3c; padding: 3px 6px; font-size: 0.65rem; }
         
-        .city-search-wrapper { position: relative; width: 100%; flex-grow: 1; }
+        .city-search-wrapper { position: relative; flex-grow: 1; }
         .city-results { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 0 0 4px 4px; max-height: 150px; overflow-y: auto; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: none; }
         .city-result-item { padding: 8px; cursor: pointer; font-size: 0.85rem; border-bottom: 1px solid #f0f0f0; }
         .city-result-item:hover { background: #f0f0f0; }
@@ -205,7 +170,6 @@
         {name: "Santiago, Chile", tz: "America/Santiago"}, {name: "Caracas, Venezuela", tz: "America/Caracas"}
     ];
 
-    // DATE TOKENS
     const dateTokens = [
         {val: 'day_name_full', txt: 'Day Name (Monday)'},
         {val: 'day_name_short', txt: 'Day Name (Mon)'},
@@ -215,7 +179,7 @@
         {val: 'month_num', txt: 'Month Number (01)'},
         {val: 'year', txt: 'Year (2026)'},
         {val: 'week_num', txt: 'Week Number'},
-        {val: 'day_year', txt: 'Day of Year (Day 28 of 365)'},
+        {val: 'day_year', txt: 'Day of Year'},
         {val: 'quarter', txt: 'Quarter (Q1)'},
         {val: 'separator', txt: 'Separator (|)'}
     ];
@@ -233,31 +197,27 @@
             } else { blocks = [{ type: 'header', text: 'Welcome' }]; }
         } catch(e) { console.error(e); }
         renderBlocks();
-        setTimeout(refreshPreview, 1000); // 1s delay to allow DOM render
+        setTimeout(refreshPreview, 1000);
     }
 
-    // --- PREVIEW LOGIC ---
+    // --- PREVIEW LOGIC (Restored V6 Timestamp) ---
     window.refreshPreview = () => {
-        // Generate the Hash part
         const json = JSON.stringify({ settings, blocks });
         const encoded = btoa(json);
+        const parts = window.location.href.split('#');
+        let baseUrl = parts[0];
+        if(baseUrl.includes('admin.html')) baseUrl = baseUrl.replace('admin.html', 'index.html');
+        else if(baseUrl.endsWith('/')) baseUrl += 'index.html';
+        else baseUrl += '/index.html';
+        
+        // This timestamp parameter forces the browser to treat it as a new file load
+        // preventing the "greyed out" local caching issue
+        const url = `${baseUrl}?t=${Date.now()}#${encoded}`;
         
         const frame = document.getElementById('preview-frame');
+        if(frame) frame.src = url;
         
-        // METHOD: We only change the hash. 
-        // Index.html logic listens for changes or polls. 
-        // If it's not updating, we force a reload.
-        
-        const newSrc = "index.html#" + encoded;
-        
-        if (frame.src !== newSrc) {
-            frame.src = newSrc;
-        } else {
-            // Force reload if src is identical (user clicked refresh manually)
-            frame.contentWindow.location.reload();
-        }
-        
-        generateLink(); // Update the copy text box
+        generateLink(); // Update the copy box
     };
 
     window.updateBlockAndRender = (idx, key, val) => {
@@ -344,7 +304,27 @@
             html += `
                 <div class="viz-controls">
                     <div class="row" style="margin-top:0;">
-                        <div class="col"><label>Color</label><select onchange="updateBlock(${index}, 'color', this.value)"><option value="default">Default</option><option value="gray" ${block.color=='gray'?'selected':''}>Gray</option><option value="blue" ${block.color=='blue'?'selected':''}>Blue</option><option value="red" ${block.color=='red'?'selected':''}>Red</option><option value="green" ${block.color=='green'?'selected':''}>Green</option></select></div>
+                        <div class="col"><label>Color</label>
+                        <select onchange="updateBlock(${index}, 'color', this.value)">
+                            <option value="default">Default</option>
+                            <option value="gray" ${block.color=='gray'?'selected':''}>Gray</option>
+                            <option value="slate" ${block.color=='slate'?'selected':''}>Slate</option>
+                            <option value="brown" ${block.color=='brown'?'selected':''}>Brown</option>
+                            <option value="orange" ${block.color=='orange'?'selected':''}>Orange</option>
+                            <option value="amber" ${block.color=='amber'?'selected':''}>Amber</option>
+                            <option value="yellow" ${block.color=='yellow'?'selected':''}>Yellow</option>
+                            <option value="lime" ${block.color=='lime'?'selected':''}>Lime</option>
+                            <option value="green" ${block.color=='green'?'selected':''}>Green</option>
+                            <option value="teal" ${block.color=='teal'?'selected':''}>Teal</option>
+                            <option value="cyan" ${block.color=='cyan'?'selected':''}>Cyan</option>
+                            <option value="blue" ${block.color=='blue'?'selected':''}>Blue</option>
+                            <option value="indigo" ${block.color=='indigo'?'selected':''}>Indigo</option>
+                            <option value="purple" ${block.color=='purple'?'selected':''}>Purple</option>
+                            <option value="pink" ${block.color=='pink'?'selected':''}>Pink</option>
+                            <option value="rose" ${block.color=='rose'?'selected':''}>Rose</option>
+                            <option value="red" ${block.color=='red'?'selected':''}>Red</option>
+                        </select>
+                        </div>
                         <div class="col"><label>Width</label><select onchange="updateBlock(${index}, 'width', this.value)"><option value="100">Full</option><option value="50" ${block.width=='50'?'selected':''}>Half</option></select></div>
                     </div>
                 </div></div>`;
@@ -370,21 +350,44 @@
             const row = document.createElement('div');
             row.className = 'sub-item';
             
+            // New Layout: Search (Top) and Label (Bottom)
             const wrapper = document.createElement('div');
-            wrapper.className = 'city-search-wrapper';
-            const input = document.createElement('input');
-            input.placeholder = "Search City (e.g. London)";
-            input.value = item.label || '';
-            input.oninput = (e) => showCitySuggestions(e.target, bIdx, iIdx);
+            wrapper.style.width = '100%';
             
+            const searchRow = document.createElement('div');
+            searchRow.style.display = 'flex'; searchRow.style.gap = '5px'; searchRow.style.marginBottom = '5px';
+            
+            const searchWrap = document.createElement('div');
+            searchWrap.className = 'city-search-wrapper';
+            const input = document.createElement('input');
+            input.placeholder = "🔍 Search City/Timezone...";
+            // We use item.timezone as a hint if user wants to see what's selected? 
+            // Or just keep it as a search tool. Let's keep it blank or last search?
+            // Actually, best to keep it blank to encourage searching, but maybe show current TZ.
+            // Let's just use it for search.
+            input.oninput = (e) => showCitySuggestions(e.target, bIdx, iIdx);
             const results = document.createElement('div');
             results.className = 'city-results';
-            wrapper.appendChild(input); wrapper.appendChild(results);
+            searchWrap.appendChild(input); searchWrap.appendChild(results);
             
             const del = document.createElement('button'); del.className = 'sub-btn-rem'; del.innerText = '×';
             del.onclick = () => removeSubItem(bIdx, 'locations', iIdx);
-
-            row.appendChild(wrapper); row.appendChild(del); container.appendChild(row);
+            
+            searchRow.appendChild(searchWrap);
+            searchRow.appendChild(del);
+            
+            const labelRow = document.createElement('div');
+            const lblInput = document.createElement('input');
+            lblInput.placeholder = "Label (e.g. Home)";
+            lblInput.value = item.label || '';
+            lblInput.oninput = (e) => { blocks[bIdx].locations[iIdx].label = e.target.value; updateState(); };
+            labelRow.appendChild(lblInput);
+            
+            wrapper.appendChild(searchRow);
+            wrapper.appendChild(labelRow);
+            
+            row.appendChild(wrapper);
+            container.appendChild(row);
         });
     }
 
@@ -400,8 +403,11 @@
             div.className = 'city-result-item';
             div.innerText = city.name;
             div.onclick = () => {
-                blocks[bIdx].locations[iIdx].label = city.name.split(',')[0]; 
+                // Auto-fill label if empty, otherwise just update TZ
+                if(!blocks[bIdx].locations[iIdx].label) blocks[bIdx].locations[iIdx].label = city.name.split(',')[0];
                 blocks[bIdx].locations[iIdx].timezone = city.tz;
+                input.value = ''; // Clear search box to show it worked
+                input.placeholder = "Selected: " + city.name;
                 updateState(); renderBlocks(); 
             };
             results.appendChild(div);
@@ -422,12 +428,13 @@
         array.forEach((item, iIdx) => {
             const row = document.createElement('div');
             row.className = 'sub-item';
-            row.style.borderBottom = "1px solid #eee";
-            row.style.paddingBottom = "8px";
+            
+            const topRow = document.createElement('div');
+            topRow.style.width = '100%'; topRow.style.display = 'flex'; topRow.style.gap = '5px'; topRow.style.alignItems = 'center';
             
             const check = document.createElement('input'); 
             check.type = 'checkbox'; 
-            check.style.width = 'auto'; check.style.marginRight = '8px';
+            check.style.width = 'auto'; check.style.marginRight = '5px';
             check.checked = item.visible !== false;
             check.onchange = (e) => { blocks[bIdx].items[iIdx].visible = e.target.checked; updateState(); };
             
@@ -440,7 +447,8 @@
             const down = document.createElement('button'); down.className = 'sub-btn-mov'; down.innerText = '↓';
             down.onclick = () => moveItem(bIdx, 'items', iIdx, 1);
             
-            row.appendChild(check); row.appendChild(lbl); row.appendChild(up); row.appendChild(down);
+            topRow.appendChild(check); topRow.appendChild(lbl); topRow.appendChild(up); topRow.appendChild(down);
+            row.appendChild(topRow);
             
             if(item.type === 'life') {
                 const lifeRow = document.createElement('div');
