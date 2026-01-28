@@ -2,24 +2,33 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Widget Admin V7</title>
+    <title>Widget Admin V7.1</title>
     <style>
-        /* LAYOUT */
+        /* CORE LAYOUT */
         html, body { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f7f7f5; color: #37352f; }
         .panel-left { width: 50%; height: 100%; background: #fff; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; }
         .panel-right { width: 50%; height: 100%; background: #eef0f2; padding: 25px; box-sizing: border-box; display: flex; flex-direction: column; }
+        
+        /* HEADER & CONTENT */
         .sticky-header { padding: 25px; background: white; border-bottom: 1px solid #f0f0f0; flex-shrink: 0; z-index: 10; }
         .scroll-content { padding: 20px 25px 40px 25px; overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; gap: 20px; }
         
-        /* PREVIEW - FIXED HEIGHT */
-        .preview-wrapper { flex-grow: 1; width: 100%; background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden; border: 1px solid #ccc; display: flex; flex-direction: column; }
-        .preview-toolbar { padding: 10px; background: #dfe1e6; border-bottom: 1px solid #ccc; display: flex; justify-content: center; align-items: center; }
+        /* PREVIEW FRAME */
+        .preview-wrapper { 
+            flex-grow: 1; width: 100%; 
+            background: white; border-radius: 8px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+            overflow: hidden; border: 1px solid #ccc; 
+            display: flex; flex-direction: column;
+        }
+        .preview-toolbar { padding: 10px; background: #dfe1e6; border-bottom: 1px solid #ccc; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
         .preview-label { font-size: 0.75rem; font-weight: bold; color: #555; text-transform: uppercase; letter-spacing: 1px;}
         iframe { flex-grow: 1; width: 100%; height: 100%; border: none; background: white; display: block; }
 
-        /* UI ELEMENTS */
+        /* TYPOGRAPHY & UI */
         h1 { margin: 0; font-size: 1.5rem; letter-spacing: -0.5px; }
         h2 { font-size: 0.85rem; color: #999; text-transform: uppercase; margin: 0 0 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px; letter-spacing: 0.5px; font-weight: 600;}
+        
         .dark-section { background: #34495e; padding: 15px; border-radius: 8px; color: white; flex-shrink: 0; }
         .dark-section h2 { color: rgba(255,255,255,0.7); border-bottom-color: rgba(255,255,255,0.2); }
         .dark-section label { color: rgba(255,255,255,0.9); }
@@ -32,7 +41,7 @@
         .btn-copy { background: #27ae60; flex: 2; border: 1px solid #2ecc71; } .btn-copy:hover { background: #219150; }
         .btn-open { background: #7f8c8d; flex: 0; min-width: 40px; font-size: 1.2rem; padding: 0; display:flex; align-items:center; justify-content:center;} .btn-open:hover { background: #95a5a6; }
 
-        /* BLOCKS */
+        /* BLOCK CARDS */
         .block-card { background: white; border: 1px solid #e0e0e0; border-radius: 6px; margin-bottom: 8px; border-left: 4px solid #999; transition: all 0.2s; }
         .block-header { padding: 10px 15px; cursor: pointer; display: flex; align-items: center; gap: 10px; background: #fbfbfa; user-select: none; }
         .block-header:hover { background: #f2f2f2; }
@@ -42,13 +51,13 @@
         .block-content { padding: 15px; border-top: 1px solid #f0f0f0; display: none; }
         .block-card.open .block-content { display: block; }
         
-        /* FIXED WRAPPING AND ALIGNMENT */
+        /* FORM ITEMS */
         .sub-list { margin-bottom: 10px; border: 1px solid #eee; padding: 10px; border-radius: 4px; background: #fafafa; }
-        .sub-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; flex-wrap: nowrap; } /* FIXED: No Wrap */
-        .sub-item select { flex-grow: 1; width: auto; min-width: 0; } /* Allow dropdown to shrink if needed */
+        .sub-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; flex-wrap: nowrap; } /* No Wrap forces single line */
+        .sub-item select, .sub-item input { flex-grow: 1; width: auto; min-width: 50px; } 
         .sub-btn-add { background: #e0e0e0; border: none; font-size: 0.7rem; padding: 4px 8px; cursor: pointer; border-radius: 3px; }
-        .sub-btn-rem { background: #ffdede; color: red; border: none; cursor: pointer; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; } /* Don't shrink delete btn */
-        .sub-btn-mov { background: #f0f0f0; border: 1px solid #ddd; cursor: pointer; width: 20px; height: 20px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: #666; }
+        .sub-btn-rem { background: #ffdede; color: red; border: none; cursor: pointer; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; } 
+        .sub-btn-mov { background: #f0f0f0; border: 1px solid #ddd; cursor: pointer; width: 20px; height: 20px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: #666; flex-shrink: 0;}
 
         .type-header { border-left-color: #bdc3c7; } .type-world_clock { border-left-color: #1abc9c; }
         .type-date_display { border-left-color: #2ecc71; } .type-progress_group { border-left-color: #e67e22; }
@@ -138,7 +147,7 @@
     let blocks = [];
     let dragSrc = null;
     
-    // CITY DATABASE (Truncated for response size, realistic set)
+    // CITY DATABASE
     const cityDB = [
         {name: "New York, USA", tz: "America/New_York"}, {name: "London, UK", tz: "Europe/London"},
         {name: "Tokyo, Japan", tz: "Asia/Tokyo"}, {name: "Paris, France", tz: "Europe/Paris"},
@@ -172,14 +181,14 @@
         {name: "Santiago, Chile", tz: "America/Santiago"}, {name: "Caracas, Venezuela", tz: "America/Caracas"}
     ];
 
-    // UPDATED DATE TOKENS (Added Month Num, Removed Comma/Space)
+    // UPDATED TOKENS
     const dateTokens = [
         {val: 'day_name_full', txt: 'Day Name (Monday)'},
         {val: 'day_name_short', txt: 'Day Name (Mon)'},
         {val: 'date_num', txt: 'Date (28)'},
         {val: 'month_full', txt: 'Month (January)'},
         {val: 'month_short', txt: 'Month (Jan)'},
-        {val: 'month_num', txt: 'Month Number (01)'}, /* ADDED */
+        {val: 'month_num', txt: 'Month Number (01)'},
         {val: 'year', txt: 'Year (2026)'},
         {val: 'week_num', txt: 'Week Number'},
         {val: 'day_year', txt: 'Day of Year (Day 28 of 365)'},
@@ -203,13 +212,15 @@
         setTimeout(refreshPreview, 100);
     }
 
+    // FIXED PREVIEW LOGIC: Uses relative path for iframe source
     window.refreshPreview = () => {
         const raw = generateLink();
         const parts = raw.split('#');
-        // Ensure robust path generation for Iframe
-        const url = `${parts[0]}?t=${Date.now()}#${parts[1]}`;
+        // This ensures the preview loads 'index.html' from the same folder as 'admin.html'
+        // avoiding absolute path blocking issues
+        const relativeUrl = `index.html?t=${Date.now()}#${parts[1]}`;
         const frame = document.getElementById('preview-frame');
-        if(frame) frame.src = url;
+        if(frame) frame.src = relativeUrl;
     };
 
     window.updateBlockAndRender = (idx, key, val) => {
@@ -273,7 +284,6 @@
 
             else if (block.type === 'progress_group') {
                 html += `<label>Enabled Bars</label><div class="sub-list" id="sub-list-${index}"></div>`;
-                // No button needed
             }
 
             else if (block.type === 'progress_custom') html += `<label>Label</label><input type="text" value="${block.label}" oninput="updateBlock(${index}, 'label', this.value)"><div class="row"><div class="col"><label>Start</label><input type="date" value="${block.start}" oninput="updateBlock(${index}, 'start', this.value)"></div><div class="col"><label>End</label><input type="date" value="${block.end}" oninput="updateBlock(${index}, 'end', this.value)"></div></div>`;
