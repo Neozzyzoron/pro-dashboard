@@ -2,12 +2,19 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Widget Admin V4.1</title>
+    <title>Widget Admin V5</title>
     <style>
         /* CORE LAYOUT */
         html, body { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; }
         body { display: flex; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f7f7f5; color: #37352f; }
-        .panel-left { width: 50%; height: 100%; padding: 25px; box-sizing: border-box; overflow-y: auto; border-right: 1px solid #e0e0e0; background: #fff; display: flex; flex-direction: column; gap: 20px;}
+        
+        /* LEFT PANEL (New Flex Layout for Sticky Top) */
+        .panel-left { 
+            width: 50%; height: 100%; 
+            background: #fff; border-right: 1px solid #e0e0e0;
+            display: flex; flex-direction: column; 
+        }
+        
         .panel-right { width: 50%; height: 100%; background: #eef0f2; padding: 25px; box-sizing: border-box; display: flex; flex-direction: column; }
         
         /* PREVIEW */
@@ -16,22 +23,38 @@
         .preview-label { font-size: 0.75rem; font-weight: bold; color: #555; text-transform: uppercase; letter-spacing: 1px;}
         iframe { flex-grow: 1; width: 100%; border: none; background: white; display: block; }
 
-        /* EDITOR */
+        /* EDITOR STYLES */
         h1 { margin: 0; font-size: 1.5rem; letter-spacing: -0.5px; }
         h2 { font-size: 0.85rem; color: #999; text-transform: uppercase; margin: 0 0 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px; letter-spacing: 0.5px; font-weight: 600;}
         
-        /* DARK HEADER SECTIONS */
-        .dark-section { background: #34495e; padding: 15px; border-radius: 8px; color: white; flex-shrink: 0; }
-        .dark-section h2 { color: rgba(255,255,255,0.7); border-bottom-color: rgba(255,255,255,0.2); }
-        .dark-section label { color: rgba(255,255,255,0.9); }
-        
-        .action-area { padding: 15px; background: #2c3e50; border-radius: 8px; color: white; flex-shrink: 0; }
+        /* STICKY HEADER (Action Area) */
+        .sticky-header {
+            padding: 25px 25px 15px 25px; /* Top/Sides Padding */
+            background: white;
+            border-bottom: 1px solid #f0f0f0;
+            flex-shrink: 0; /* Prevents shrinking */
+            z-index: 10;
+        }
+        .action-area { padding: 15px; background: #2c3e50; border-radius: 8px; color: white; }
         .link-box { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px; font-family: monospace; font-size: 0.75rem; word-break: break-all; margin-bottom: 10px; max-height: 45px; overflow-y: auto; color: #aeb6bf; }
         .action-btns { display: flex; gap: 8px; }
         .btn-action { padding: 10px; font-size: 0.8rem; color: white; border-radius: 4px; border:none; cursor: pointer; font-weight: 600; transition: background 0.2s; }
         .btn-refresh { background: #3498db; flex: 2; } .btn-refresh:hover { background: #2980b9; }
         .btn-copy { background: #27ae60; flex: 2; border: 1px solid #2ecc71; } .btn-copy:hover { background: #219150; }
         .btn-open { background: #7f8c8d; flex: 0; min-width: 40px; font-size: 1.2rem; padding: 0; display:flex; align-items:center; justify-content:center;} .btn-open:hover { background: #95a5a6; }
+
+        /* SCROLLABLE CONTENT AREA */
+        .scroll-content {
+            padding: 20px 25px 40px 25px; /* Bottom padding for scroll space */
+            overflow-y: auto;
+            flex-grow: 1;
+            display: flex; flex-direction: column; gap: 20px;
+        }
+
+        /* DARK HEADER SECTIONS */
+        .dark-section { background: #34495e; padding: 15px; border-radius: 8px; color: white; flex-shrink: 0; }
+        .dark-section h2 { color: rgba(255,255,255,0.7); border-bottom-color: rgba(255,255,255,0.2); }
+        .dark-section label { color: rgba(255,255,255,0.9); }
 
         /* BLOCKS */
         .block-card { background: white; border: 1px solid #e0e0e0; border-radius: 6px; margin-bottom: 8px; border-left: 4px solid #999; transition: all 0.2s; }
@@ -73,37 +96,42 @@
 <body>
 
 <div class="panel-left">
-    <div class="action-area">
-        <label style="color:#aaa; font-size:0.7rem;">WIDGET LINK</label>
-        <div class="link-box" id="result-url">Generate...</div>
-        <div class="action-btns">
-            <button class="btn-action btn-refresh" onclick="refreshPreview()">↻ REFRESH PREVIEW</button>
-            <button class="btn-action btn-copy" id="btn-copy" onclick="copyLink()">COPY LINK</button>
-            <button class="btn-action btn-open" onclick="window.open(generateLink(), '_blank')" title="Open in New Tab">⬈</button>
+    <div class="sticky-header">
+        <h1>Widget Builder</h1>
+        <div class="action-area">
+            <label style="color:#aaa; font-size:0.7rem;">WIDGET LINK</label>
+            <div class="link-box" id="result-url">Generate...</div>
+            <div class="action-btns">
+                <button class="btn-action btn-refresh" onclick="refreshPreview()">↻ REFRESH PREVIEW</button>
+                <button class="btn-action btn-copy" id="btn-copy" onclick="copyLink()">COPY LINK</button>
+                <button class="btn-action btn-open" onclick="window.open(generateLink(), '_blank')" title="Open in New Tab">⬈</button>
+            </div>
         </div>
     </div>
 
-    <div class="dark-section">
-        <h2>Global Settings</h2>
-        <div class="settings-grid">
-            <div><label>Time</label><select id="set-time" onchange="updateState()"><option value="12">12 Hour</option><option value="24">24 Hour</option></select></div>
-            <div><label>Theme</label><select id="set-theme" onchange="updateState()"><option value="standard">Standard</option><option value="minimal">Minimal</option><option value="card">Cards</option></select></div>
-            <div><label>Font Size</label><select id="set-font" onchange="updateState()"><option value="standard">Standard</option><option value="small">Small</option><option value="large">Large</option></select></div>
+    <div class="scroll-content">
+        <div class="dark-section">
+            <h2>Global Settings</h2>
+            <div class="settings-grid">
+                <div><label>Time</label><select id="set-time" onchange="updateState()"><option value="12">12 Hour</option><option value="24">24 Hour</option></select></div>
+                <div><label>Theme</label><select id="set-theme" onchange="updateState()"><option value="standard">Standard</option><option value="minimal">Minimal</option><option value="card">Cards</option></select></div>
+                <div><label>Font Size</label><select id="set-font" onchange="updateState()"><option value="standard">Standard</option><option value="small">Small</option><option value="large">Large</option></select></div>
+            </div>
         </div>
-    </div>
 
-    <div class="section" style="flex-grow:1; display:flex; flex-direction:column;">
-        <h2>Blocks</h2>
-        <div id="blocks-area"></div>
-        <div class="btn-row" style="margin-top:15px;">
-            <button class="btn-header" onclick="addBlock('header')">+ Text</button>
-            <button class="btn-time" onclick="addBlock('world_clock')">+ Time</button>
-            <button class="btn-date" onclick="addBlock('date_display')">+ Date</button>
-            <button class="btn-auto" onclick="addBlock('progress_group')">+ Auto Progress</button>
-            <button class="btn-custom" onclick="addBlock('progress_custom')">+ Custom Progress</button>
-            <button class="btn-cycle" onclick="addBlock('progress_cycle')">+ Cycle Progress</button>
-            <button class="btn-count" onclick="addBlock('countdown')">+ Countdown</button>
-            <button class="btn-timer" onclick="addBlock('timer')">+ Timer</button>
+        <div class="section">
+            <h2>Blocks</h2>
+            <div id="blocks-area"></div>
+            <div class="btn-row" style="margin-top:15px;">
+                <button class="btn-header" onclick="addBlock('header')">+ Text</button>
+                <button class="btn-time" onclick="addBlock('world_clock')">+ Time</button>
+                <button class="btn-date" onclick="addBlock('date_display')">+ Date</button>
+                <button class="btn-auto" onclick="addBlock('progress_group')">+ Auto Progress</button>
+                <button class="btn-custom" onclick="addBlock('progress_custom')">+ Custom Progress</button>
+                <button class="btn-cycle" onclick="addBlock('progress_cycle')">+ Cycle Progress</button>
+                <button class="btn-count" onclick="addBlock('countdown')">+ Countdown</button>
+                <button class="btn-timer" onclick="addBlock('timer')">+ Timer</button>
+            </div>
         </div>
     </div>
 </div>
@@ -120,7 +148,7 @@
     let blocks = [];
     let dragSrc = null;
     
-    // Date Tokens
+    // Updated Date Tokens
     const dateTokens = [
         {val: 'day_name_full', txt: 'Day Name (Monday)'},
         {val: 'day_name_short', txt: 'Day Name (Mon)'},
@@ -129,9 +157,10 @@
         {val: 'month_short', txt: 'Month (Jan)'},
         {val: 'year', txt: 'Year (2026)'},
         {val: 'week_num', txt: 'Week Number'},
-        {val: 'day_year', txt: 'Day of Year'},
+        {val: 'day_year', txt: 'Day of Year (Day 28 of 365)'},
         {val: 'quarter', txt: 'Quarter (Q1)'},
         {val: 'separator', txt: 'Separator (|)'},
+        {val: 'comma', txt: 'Comma (,)'},
         {val: 'space', txt: 'Space ( )'}
     ];
 
@@ -159,6 +188,13 @@
         if(frame) frame.src = url;
     };
 
+    // New Helper: Update Block & Immediately Re-Render DOM (For checkboxes/Instant Toggle)
+    window.updateBlockAndRender = (idx, key, val) => {
+        blocks[idx][key] = val;
+        updateState();
+        renderBlocks(); // Re-draws input fields to show/hide time input instantly
+    };
+
     function renderBlocks() {
         // UX FIX: Store open states
         const openIndices = [];
@@ -175,7 +211,6 @@
             div.className = `block-card type-${block.type}`;
             div.draggable = true;
             div.dataset.index = index;
-            // Restore open state
             if(openIndices.includes(index)) div.classList.add('open');
 
             div.addEventListener('dragstart', function(e) { dragSrc = this; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/html', this.innerHTML); this.classList.add('dragging'); });
@@ -232,12 +267,12 @@
                 </select></div>`;
             }
             
-            // COUNTDOWN TIME TOGGLE
+            // COUNTDOWN TIME TOGGLE (INSTANT REFRESH)
             else if (block.type === 'countdown') {
                 html += `<label>Label</label><input type="text" value="${block.label}" oninput="updateBlock(${index}, 'label', this.value)"><div class="row"><div class="col"><label>Target Date</label><input type="date" value="${block.date}" oninput="updateBlock(${index}, 'date', this.value)"></div><div class="col"><label>Format</label><select onchange="updateBlock(${index}, 'style', this.value)"><option value="standard" ${block.style=='standard'?'selected':''}>Standard (5 Days)</option><option value="precise" ${block.style=='precise'?'selected':''}>Precise (5d 4h)</option><option value="full" ${block.style=='full'?'selected':''}>Full (5d 4h 30m)</option></select></div></div>`;
-                // Time Toggle
+                // Time Toggle (Calls updateBlockAndRender)
                 const hasTime = block.includeTime === true;
-                html += `<div style="margin-top:8px; display:flex; align-items:center; gap:8px;"><input type="checkbox" style="width:auto;" onchange="updateBlock(${index}, 'includeTime', this.checked)" ${hasTime?'checked':''}> <label style="margin:0; font-weight:400;">Include specific time?</label></div>`;
+                html += `<div style="margin-top:8px; display:flex; align-items:center; gap:8px;"><input type="checkbox" style="width:auto;" onchange="updateBlockAndRender(${index}, 'includeTime', this.checked)" ${hasTime?'checked':''}> <label style="margin:0; font-weight:400;">Include specific time?</label></div>`;
                 if(hasTime) {
                     html += `<div style="margin-top:5px;"><label>Target Time</label><input type="time" value="${block.time || '00:00'}" oninput="updateBlock(${index}, 'time', this.value)"></div>`;
                 }
@@ -292,17 +327,14 @@
         });
     }
 
-    // --- STANDARD SUB-LIST ---
     function renderSubList(bIdx, key, array, fields) {
         const container = document.getElementById(`sub-list-${bIdx}`);
         if(!container || !array) return;
         container.innerHTML = '';
         array.forEach((item, iIdx) => {
             const row = document.createElement('div'); row.className = 'sub-item';
-            
             const in1 = document.createElement('input'); in1.placeholder = fields[0]; in1.value = item.label || '';
             in1.oninput = (e) => updateSubItem(bIdx, key, iIdx, 'label', e.target.value);
-            
             let in2;
             if (key === 'items') {
                 in2 = document.createElement('select');
@@ -318,7 +350,6 @@
         });
     }
 
-    // --- DATE LIST RENDERER ---
     function renderDateList(bIdx, key, array) {
         const container = document.getElementById(`sub-list-${key==='line1'?'l1':'l2'}-${bIdx}`);
         if(!container) return;
@@ -344,19 +375,16 @@
 
     window.updateBlock = (i, k, v) => { blocks[i][k] = v; updateState(); };
     window.updateSubItem = (bI, k, iI, f, v) => { blocks[bI][k][iI][f] = v; updateState(); };
-    
     window.addSubItem = (bI, k) => { 
         if(k==='locations') blocks[bI][k].push({label:'New City', timezone:'UTC'});
         if(k==='items') blocks[bI][k].push({label:'New Bar', type:'month'});
         renderBlocks(); updateState();
     };
-    
     window.addDateItem = (bI, key) => {
         if(!blocks[bI][key]) blocks[bI][key] = [];
         blocks[bI][key].push('separator'); 
         renderBlocks(); updateState();
     };
-
     window.removeSubItem = (bI, k, iI) => { blocks[bI][k].splice(iI, 1); renderBlocks(); updateState(); };
     
     window.addBlock = (t) => {
