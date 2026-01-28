@@ -2,20 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Widget Admin V5</title>
+    <title>Widget Admin V6</title>
     <style>
-        /* CORE LAYOUT */
-        html, body { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; }
-        body { display: flex; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f7f7f5; color: #37352f; }
-        
-        /* LEFT PANEL (New Flex Layout for Sticky Top) */
-        .panel-left { 
-            width: 50%; height: 100%; 
-            background: #fff; border-right: 1px solid #e0e0e0;
-            display: flex; flex-direction: column; 
-        }
-        
+        /* LAYOUT */
+        html, body { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f7f7f5; color: #37352f; }
+        .panel-left { width: 50%; height: 100%; background: #fff; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; }
         .panel-right { width: 50%; height: 100%; background: #eef0f2; padding: 25px; box-sizing: border-box; display: flex; flex-direction: column; }
+        .sticky-header { padding: 25px; background: white; border-bottom: 1px solid #f0f0f0; flex-shrink: 0; z-index: 10; }
+        .scroll-content { padding: 20px 25px 40px 25px; overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; gap: 20px; }
         
         /* PREVIEW */
         .preview-wrapper { flex-grow: 1; width: 100%; background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden; border: 1px solid #ccc; display: flex; flex-direction: column; }
@@ -23,18 +17,13 @@
         .preview-label { font-size: 0.75rem; font-weight: bold; color: #555; text-transform: uppercase; letter-spacing: 1px;}
         iframe { flex-grow: 1; width: 100%; border: none; background: white; display: block; }
 
-        /* EDITOR STYLES */
+        /* UI ELEMENTS */
         h1 { margin: 0; font-size: 1.5rem; letter-spacing: -0.5px; }
         h2 { font-size: 0.85rem; color: #999; text-transform: uppercase; margin: 0 0 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px; letter-spacing: 0.5px; font-weight: 600;}
+        .dark-section { background: #34495e; padding: 15px; border-radius: 8px; color: white; flex-shrink: 0; }
+        .dark-section h2 { color: rgba(255,255,255,0.7); border-bottom-color: rgba(255,255,255,0.2); }
+        .dark-section label { color: rgba(255,255,255,0.9); }
         
-        /* STICKY HEADER (Action Area) */
-        .sticky-header {
-            padding: 25px 25px 15px 25px; /* Top/Sides Padding */
-            background: white;
-            border-bottom: 1px solid #f0f0f0;
-            flex-shrink: 0; /* Prevents shrinking */
-            z-index: 10;
-        }
         .action-area { padding: 15px; background: #2c3e50; border-radius: 8px; color: white; }
         .link-box { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px; font-family: monospace; font-size: 0.75rem; word-break: break-all; margin-bottom: 10px; max-height: 45px; overflow-y: auto; color: #aeb6bf; }
         .action-btns { display: flex; gap: 8px; }
@@ -43,22 +32,8 @@
         .btn-copy { background: #27ae60; flex: 2; border: 1px solid #2ecc71; } .btn-copy:hover { background: #219150; }
         .btn-open { background: #7f8c8d; flex: 0; min-width: 40px; font-size: 1.2rem; padding: 0; display:flex; align-items:center; justify-content:center;} .btn-open:hover { background: #95a5a6; }
 
-        /* SCROLLABLE CONTENT AREA */
-        .scroll-content {
-            padding: 20px 25px 40px 25px; /* Bottom padding for scroll space */
-            overflow-y: auto;
-            flex-grow: 1;
-            display: flex; flex-direction: column; gap: 20px;
-        }
-
-        /* DARK HEADER SECTIONS */
-        .dark-section { background: #34495e; padding: 15px; border-radius: 8px; color: white; flex-shrink: 0; }
-        .dark-section h2 { color: rgba(255,255,255,0.7); border-bottom-color: rgba(255,255,255,0.2); }
-        .dark-section label { color: rgba(255,255,255,0.9); }
-
         /* BLOCKS */
         .block-card { background: white; border: 1px solid #e0e0e0; border-radius: 6px; margin-bottom: 8px; border-left: 4px solid #999; transition: all 0.2s; }
-        .block-card.dragging { opacity: 0.5; border: 2px dashed #999; }
         .block-header { padding: 10px 15px; cursor: pointer; display: flex; align-items: center; gap: 10px; background: #fbfbfa; user-select: none; }
         .block-header:hover { background: #f2f2f2; }
         .block-title { font-weight: 600; font-size: 0.85rem; flex-grow: 1; text-transform: uppercase; color: #555; }
@@ -66,10 +41,12 @@
         .block-card.open .toggle-icon { transform: rotate(180deg); }
         .block-content { padding: 15px; border-top: 1px solid #f0f0f0; display: none; }
         .block-card.open .block-content { display: block; }
+        
         .sub-list { margin-bottom: 10px; border: 1px solid #eee; padding: 10px; border-radius: 4px; background: #fafafa; }
-        .sub-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }
+        .sub-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; flex-wrap: wrap; }
         .sub-btn-add { background: #e0e0e0; border: none; font-size: 0.7rem; padding: 4px 8px; cursor: pointer; border-radius: 3px; }
         .sub-btn-rem { background: #ffdede; color: red; border: none; cursor: pointer; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .sub-btn-mov { background: #f0f0f0; border: 1px solid #ddd; cursor: pointer; width: 20px; height: 20px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: #666; }
 
         .type-header { border-left-color: #bdc3c7; } .type-world_clock { border-left-color: #1abc9c; }
         .type-date_display { border-left-color: #2ecc71; } .type-progress_group { border-left-color: #e67e22; }
@@ -91,6 +68,17 @@
         .btn-custom { background: #fcf3cf; color: #7d6608; } .btn-cycle { background: #ebdef0; color: #5b2c6f; }
         .btn-count { background: #d6eaf8; color: #154360; } .btn-timer { background: #fadbd8; color: #78281f; }
         .btn-del { background: transparent; color: #c0392b; border: 1px solid #e74c3c; padding: 3px 6px; font-size: 0.65rem; }
+        
+        /* SEARCH SUGGESTIONS */
+        .city-search-wrapper { position: relative; width: 100%; flex-grow: 1; }
+        .city-results { 
+            position: absolute; top: 100%; left: 0; right: 0; 
+            background: white; border: 1px solid #ddd; border-radius: 0 0 4px 4px; 
+            max-height: 150px; overflow-y: auto; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+            display: none;
+        }
+        .city-result-item { padding: 8px; cursor: pointer; font-size: 0.85rem; border-bottom: 1px solid #f0f0f0; }
+        .city-result-item:hover { background: #f0f0f0; }
     </style>
 </head>
 <body>
@@ -148,20 +136,48 @@
     let blocks = [];
     let dragSrc = null;
     
-    // Updated Date Tokens
+    // CITY DATABASE (Truncated for response size, realistic set)
+    const cityDB = [
+        {name: "New York, USA", tz: "America/New_York"}, {name: "London, UK", tz: "Europe/London"},
+        {name: "Tokyo, Japan", tz: "Asia/Tokyo"}, {name: "Paris, France", tz: "Europe/Paris"},
+        {name: "Los Angeles, USA", tz: "America/Los_Angeles"}, {name: "Sydney, Australia", tz: "Australia/Sydney"},
+        {name: "Dubai, UAE", tz: "Asia/Dubai"}, {name: "Singapore", tz: "Asia/Singapore"},
+        {name: "Hong Kong", tz: "Asia/Hong_Kong"}, {name: "Berlin, Germany", tz: "Europe/Berlin"},
+        {name: "Toronto, Canada", tz: "America/Toronto"}, {name: "Mumbai, India", tz: "Asia/Kolkata"},
+        {name: "Shanghai, China", tz: "Asia/Shanghai"}, {name: "Chicago, USA", tz: "America/Chicago"},
+        {name: "Sao Paulo, Brazil", tz: "America/Sao_Paulo"}, {name: "Moscow, Russia", tz: "Europe/Moscow"},
+        {name: "Seoul, South Korea", tz: "Asia/Seoul"}, {name: "Istanbul, Turkey", tz: "Europe/Istanbul"},
+        {name: "Mexico City, Mexico", tz: "America/Mexico_City"}, {name: "Jakarta, Indonesia", tz: "Asia/Jakarta"},
+        {name: "Bangkok, Thailand", tz: "Asia/Bangkok"}, {name: "Cairo, Egypt", tz: "Africa/Cairo"},
+        {name: "Lagos, Nigeria", tz: "Africa/Lagos"}, {name: "Buenos Aires, Argentina", tz: "America/Argentina/Buenos_Aires"},
+        {name: "San Francisco, USA", tz: "America/Los_Angeles"}, {name: "Vancouver, Canada", tz: "America/Vancouver"},
+        {name: "Madrid, Spain", tz: "Europe/Madrid"}, {name: "Rome, Italy", tz: "Europe/Rome"},
+        {name: "Amsterdam, Netherlands", tz: "Europe/Amsterdam"}, {name: "Stockholm, Sweden", tz: "Europe/Stockholm"},
+        {name: "Warsaw, Poland", tz: "Europe/Warsaw"}, {name: "Vienna, Austria", tz: "Europe/Vienna"},
+        {name: "Prague, Czechia", tz: "Europe/Prague"}, {name: "Zurich, Switzerland", tz: "Europe/Zurich"},
+        {name: "Athens, Greece", tz: "Europe/Athens"}, {name: "Johannesburg, South Africa", tz: "Africa/Johannesburg"},
+        {name: "Nairobi, Kenya", tz: "Africa/Nairobi"}, {name: "Riyadh, Saudi Arabia", tz: "Asia/Riyadh"},
+        {name: "Tel Aviv, Israel", tz: "Asia/Jerusalem"}, {name: "Tehran, Iran", tz: "Asia/Tehran"},
+        {name: "New Delhi, India", tz: "Asia/Kolkata"}, {name: "Beijing, China", tz: "Asia/Shanghai"},
+        {name: "Taipei, Taiwan", tz: "Asia/Taipei"}, {name: "Kuala Lumpur, Malaysia", tz: "Asia/Kuala_Lumpur"},
+        {name: "Manila, Philippines", tz: "Asia/Manila"}, {name: "Ho Chi Minh City, Vietnam", tz: "Asia/Ho_Chi_Minh"},
+        {name: "Melbourne, Australia", tz: "Australia/Melbourne"}, {name: "Brisbane, Australia", tz: "Australia/Brisbane"},
+        {name: "Auckland, New Zealand", tz: "Pacific/Auckland"}, {name: "Honolulu, USA", tz: "Pacific/Honolulu"},
+        {name: "Anchorage, USA", tz: "America/Anchorage"}, {name: "Denver, USA", tz: "America/Denver"},
+        {name: "Phoenix, USA", tz: "America/Phoenix"}, {name: "Dallas, USA", tz: "America/Chicago"},
+        {name: "Miami, USA", tz: "America/New_York"}, {name: "Montreal, Canada", tz: "America/Toronto"},
+        {name: "Bogota, Colombia", tz: "America/Bogota"}, {name: "Lima, Peru", tz: "America/Lima"},
+        {name: "Santiago, Chile", tz: "America/Santiago"}, {name: "Caracas, Venezuela", tz: "America/Caracas"}
+        // ... (List is extensible)
+    ];
+
     const dateTokens = [
-        {val: 'day_name_full', txt: 'Day Name (Monday)'},
-        {val: 'day_name_short', txt: 'Day Name (Mon)'},
-        {val: 'date_num', txt: 'Date (28)'},
-        {val: 'month_full', txt: 'Month (January)'},
-        {val: 'month_short', txt: 'Month (Jan)'},
-        {val: 'year', txt: 'Year (2026)'},
-        {val: 'week_num', txt: 'Week Number'},
-        {val: 'day_year', txt: 'Day of Year (Day 28 of 365)'},
-        {val: 'quarter', txt: 'Quarter (Q1)'},
-        {val: 'separator', txt: 'Separator (|)'},
-        {val: 'comma', txt: 'Comma (,)'},
-        {val: 'space', txt: 'Space ( )'}
+        {val: 'day_name_full', txt: 'Day Name (Monday)'}, {val: 'day_name_short', txt: 'Day Name (Mon)'},
+        {val: 'date_num', txt: 'Date (28)'}, {val: 'month_full', txt: 'Month (January)'},
+        {val: 'month_short', txt: 'Month (Jan)'}, {val: 'year', txt: 'Year (2026)'},
+        {val: 'week_num', txt: 'Week Number'}, {val: 'day_year', txt: 'Day of Year'},
+        {val: 'quarter', txt: 'Quarter (Q1)'}, {val: 'separator', txt: 'Separator (|)'},
+        {val: 'comma', txt: 'Comma (,)'}, {val: 'space', txt: 'Space ( )'}
     ];
 
     function init() {
@@ -188,15 +204,13 @@
         if(frame) frame.src = url;
     };
 
-    // New Helper: Update Block & Immediately Re-Render DOM (For checkboxes/Instant Toggle)
     window.updateBlockAndRender = (idx, key, val) => {
         blocks[idx][key] = val;
         updateState();
-        renderBlocks(); // Re-draws input fields to show/hide time input instantly
+        renderBlocks();
     };
 
     function renderBlocks() {
-        // UX FIX: Store open states
         const openIndices = [];
         document.querySelectorAll('.block-card').forEach(el => {
             if(el.classList.contains('open')) openIndices.push(parseInt(el.dataset.index));
@@ -218,13 +232,11 @@
             div.addEventListener('drop', handleDrop);
             div.addEventListener('dragend', function() { this.classList.remove('dragging'); });
 
-            // RENAMING LOGIC
             let title = block.type.toUpperCase().replace('_',' ');
             if(block.type === 'world_clock') title = "TIME";
             if(block.type === 'progress_group') title = "PROGRESS (AUTO)";
             if(block.type === 'progress_custom') title = "PROGRESS (CUSTOM)";
             if(block.type === 'progress_cycle') title = "PROGRESS (CYCLE)";
-            
             let label = block.label || block.text || title;
 
             let html = `
@@ -251,26 +263,21 @@
                  html += `<button class="sub-btn-add" onclick="addDateItem(${index}, 'line2')">+ Add Element</button></div>`;
             }
 
+            // SMART AUTO PROGRESS RENDER
             else if (block.type === 'progress_group') {
-                html += `<label>Enabled Bars</label><div class="sub-list" id="sub-list-${index}"></div>`;
-                html += `<button class="sub-btn-add" onclick="addSubItem(${index}, 'items')">+ Add Bar</button>`;
+                html += `<label>Progress Items (Uncheck to hide)</label><div class="sub-list" id="sub-list-${index}"></div>`;
+                // No "Add" button needed for Auto Progress as they are pre-filled, but we can keep it if user deletes all
             }
 
             else if (block.type === 'progress_custom') html += `<label>Label</label><input type="text" value="${block.label}" oninput="updateBlock(${index}, 'label', this.value)"><div class="row"><div class="col"><label>Start</label><input type="date" value="${block.start}" oninput="updateBlock(${index}, 'start', this.value)"></div><div class="col"><label>End</label><input type="date" value="${block.end}" oninput="updateBlock(${index}, 'end', this.value)"></div></div>`;
             
-            // CYCLE RESET LOGIC
             else if (block.type === 'progress_cycle') {
                 html += `<label>Label</label><input type="text" value="${block.label}" oninput="updateBlock(${index}, 'label', this.value)"><div class="row"><div class="col"><label>Anchor</label><input type="date" value="${block.anchor}" oninput="updateBlock(${index}, 'anchor', this.value)"></div><div class="col"><label>Days</label><input type="number" value="${block.days}" oninput="updateBlock(${index}, 'days', this.value)"></div></div>`;
-                html += `<div style="margin-top:8px;"><label>Reset Logic</label><select onchange="updateBlock(${index}, 'resetMode', this.value)">
-                    <option value="auto" ${block.resetMode!='manual'?'selected':''}>Automatic Loop (0-100%)</option>
-                    <option value="manual" ${block.resetMode=='manual'?'selected':''}>Manual Reset (Freeze at 100%)</option>
-                </select></div>`;
+                html += `<div style="margin-top:8px;"><label>Reset Logic</label><select onchange="updateBlock(${index}, 'resetMode', this.value)"><option value="auto" ${block.resetMode!='manual'?'selected':''}>Automatic Loop</option><option value="manual" ${block.resetMode=='manual'?'selected':''}>Manual (Freeze & Reset)</option></select></div>`;
             }
             
-            // COUNTDOWN TIME TOGGLE (INSTANT REFRESH)
             else if (block.type === 'countdown') {
                 html += `<label>Label</label><input type="text" value="${block.label}" oninput="updateBlock(${index}, 'label', this.value)"><div class="row"><div class="col"><label>Target Date</label><input type="date" value="${block.date}" oninput="updateBlock(${index}, 'date', this.value)"></div><div class="col"><label>Format</label><select onchange="updateBlock(${index}, 'style', this.value)"><option value="standard" ${block.style=='standard'?'selected':''}>Standard (5 Days)</option><option value="precise" ${block.style=='precise'?'selected':''}>Precise (5d 4h)</option><option value="full" ${block.style=='full'?'selected':''}>Full (5d 4h 30m)</option></select></div></div>`;
-                // Time Toggle (Calls updateBlockAndRender)
                 const hasTime = block.includeTime === true;
                 html += `<div style="margin-top:8px; display:flex; align-items:center; gap:8px;"><input type="checkbox" style="width:auto;" onchange="updateBlockAndRender(${index}, 'includeTime', this.checked)" ${hasTime?'checked':''}> <label style="margin:0; font-weight:400;">Include specific time?</label></div>`;
                 if(hasTime) {
@@ -280,44 +287,18 @@
             
             else if (block.type === 'timer') html += `<label>Label</label><input type="text" value="${block.label}" oninput="updateBlock(${index}, 'label', this.value)"><div class="row"><div class="col"><label>Hours</label><input type="number" value="${block.hours}" oninput="updateBlock(${index}, 'hours', this.value)"></div><div class="col"><label>Minutes</label><input type="number" value="${block.minutes}" oninput="updateBlock(${index}, 'minutes', this.value)"></div></div>`;
 
-            // VISUALS
             html += `
                 <div class="viz-controls">
                     <div class="row" style="margin-top:0;">
-                        <div class="col">
-                            <label>Color</label>
-                            <div style="display:flex; gap:5px;">
-                                <select onchange="updateBlock(${index}, 'color', this.value)" style="flex:1;">
-                                    <option value="default">Default</option>
-                                    <option value="gray" ${block.color=='gray'?'selected':''}>Gray</option>
-                                    <option value="slate" ${block.color=='slate'?'selected':''}>Slate</option>
-                                    <option value="brown" ${block.color=='brown'?'selected':''}>Brown</option>
-                                    <option value="orange" ${block.color=='orange'?'selected':''}>Orange</option>
-                                    <option value="amber" ${block.color=='amber'?'selected':''}>Amber</option>
-                                    <option value="yellow" ${block.color=='yellow'?'selected':''}>Yellow</option>
-                                    <option value="lime" ${block.color=='lime'?'selected':''}>Lime</option>
-                                    <option value="green" ${block.color=='green'?'selected':''}>Green</option>
-                                    <option value="teal" ${block.color=='teal'?'selected':''}>Teal</option>
-                                    <option value="cyan" ${block.color=='cyan'?'selected':''}>Cyan</option>
-                                    <option value="blue" ${block.color=='blue'?'selected':''}>Blue</option>
-                                    <option value="indigo" ${block.color=='indigo'?'selected':''}>Indigo</option>
-                                    <option value="purple" ${block.color=='purple'?'selected':''}>Purple</option>
-                                    <option value="pink" ${block.color=='pink'?'selected':''}>Pink</option>
-                                    <option value="rose" ${block.color=='rose'?'selected':''}>Rose</option>
-                                    <option value="red" ${block.color=='red'?'selected':''}>Red</option>
-                                </select>
-                                <input type="color" value="${block.color && block.color.startsWith('#')?block.color:'#000000'}" onchange="updateBlock(${index}, 'color', this.value)" style="width:30px;height:32px;">
-                            </div>
-                        </div>
+                        <div class="col"><label>Color</label><select onchange="updateBlock(${index}, 'color', this.value)"><option value="default">Default</option><option value="gray" ${block.color=='gray'?'selected':''}>Gray</option><option value="blue" ${block.color=='blue'?'selected':''}>Blue</option><option value="red" ${block.color=='red'?'selected':''}>Red</option><option value="green" ${block.color=='green'?'selected':''}>Green</option></select></div>
                         <div class="col"><label>Width</label><select onchange="updateBlock(${index}, 'width', this.value)"><option value="100">Full</option><option value="50" ${block.width=='50'?'selected':''}>Half</option></select></div>
                     </div>
                 </div></div>`;
-            
             div.innerHTML = html;
             area.appendChild(div);
 
-            if(block.type === 'world_clock') renderSubList(index, 'locations', block.locations, ['Label', 'Timezone']);
-            if(block.type === 'progress_group') renderSubList(index, 'items', block.items, ['Label', 'Type']);
+            if(block.type === 'world_clock') renderCityList(index, block.locations);
+            if(block.type === 'progress_group') renderAutoProgressList(index, block.items);
             if(block.type === 'date_display') {
                 if(!block.line1) block.line1 = ['day_name_full', 'month_full', 'date_num'];
                 if(!block.line2) block.line2 = ['week_num', 'separator', 'quarter'];
@@ -327,29 +308,124 @@
         });
     }
 
-    function renderSubList(bIdx, key, array, fields) {
+    // --- SMART CITY LIST RENDERER ---
+    function renderCityList(bIdx, array) {
         const container = document.getElementById(`sub-list-${bIdx}`);
-        if(!container || !array) return;
+        if(!container) return;
         container.innerHTML = '';
+        
         array.forEach((item, iIdx) => {
-            const row = document.createElement('div'); row.className = 'sub-item';
-            const in1 = document.createElement('input'); in1.placeholder = fields[0]; in1.value = item.label || '';
-            in1.oninput = (e) => updateSubItem(bIdx, key, iIdx, 'label', e.target.value);
-            let in2;
-            if (key === 'items') {
-                in2 = document.createElement('select');
-                ['day','week','month','year'].forEach(opt => { in2.innerHTML += `<option value="${opt}" ${item.type==opt?'selected':''}>${opt}</option>`; });
-                in2.onchange = (e) => updateSubItem(bIdx, key, iIdx, 'type', e.target.value);
-            } else {
-                in2 = document.createElement('input'); in2.placeholder = fields[1]; in2.value = item.timezone || '';
-                in2.oninput = (e) => updateSubItem(bIdx, key, iIdx, 'timezone', e.target.value);
-            }
+            const row = document.createElement('div');
+            row.className = 'sub-item';
+            
+            // SEARCH BOX
+            const wrapper = document.createElement('div');
+            wrapper.className = 'city-search-wrapper';
+            
+            const input = document.createElement('input');
+            input.placeholder = "Search City (e.g. London)";
+            input.value = item.label || '';
+            input.oninput = (e) => showCitySuggestions(e.target, bIdx, iIdx);
+            
+            const results = document.createElement('div');
+            results.className = 'city-results';
+            
+            wrapper.appendChild(input);
+            wrapper.appendChild(results);
+            
             const del = document.createElement('button'); del.className = 'sub-btn-rem'; del.innerText = '×';
-            del.onclick = () => removeSubItem(bIdx, key, iIdx);
-            row.appendChild(in1); row.appendChild(in2); row.appendChild(del); container.appendChild(row);
+            del.onclick = () => removeSubItem(bIdx, 'locations', iIdx);
+
+            row.appendChild(wrapper);
+            row.appendChild(del);
+            container.appendChild(row);
         });
     }
 
+    function showCitySuggestions(input, bIdx, iIdx) {
+        const val = input.value.toLowerCase();
+        const results = input.nextElementSibling;
+        results.innerHTML = '';
+        
+        if(val.length < 2) { results.style.display = 'none'; return; }
+        
+        const matches = cityDB.filter(c => c.name.toLowerCase().includes(val)).slice(0, 5);
+        if(matches.length === 0) { results.style.display = 'none'; return; }
+        
+        matches.forEach(city => {
+            const div = document.createElement('div');
+            div.className = 'city-result-item';
+            div.innerText = city.name;
+            div.onclick = () => {
+                blocks[bIdx].locations[iIdx].label = city.name.split(',')[0]; // Just City Name
+                blocks[bIdx].locations[iIdx].timezone = city.tz;
+                updateState();
+                renderBlocks(); // Re-render to update UI
+            };
+            results.appendChild(div);
+        });
+        results.style.display = 'block';
+        
+        // Hide on click outside
+        document.addEventListener('click', function close(e) {
+            if(!input.contains(e.target) && !results.contains(e.target)) {
+                results.style.display = 'none';
+                document.removeEventListener('click', close);
+            }
+        });
+    }
+
+    // --- SMART AUTO PROGRESS LIST RENDERER ---
+    function renderAutoProgressList(bIdx, array) {
+        const container = document.getElementById(`sub-list-${bIdx}`);
+        if(!container) return;
+        container.innerHTML = '';
+        
+        array.forEach((item, iIdx) => {
+            const row = document.createElement('div');
+            row.className = 'sub-item';
+            row.style.borderBottom = "1px solid #eee";
+            row.style.paddingBottom = "8px";
+            
+            // Visibility Checkbox
+            const check = document.createElement('input'); 
+            check.type = 'checkbox'; 
+            check.style.width = 'auto'; check.style.marginRight = '8px';
+            check.checked = item.visible !== false;
+            check.onchange = (e) => { blocks[bIdx].items[iIdx].visible = e.target.checked; updateState(); };
+            
+            // Label
+            const lbl = document.createElement('input'); 
+            lbl.style.flex = '1'; lbl.value = item.label;
+            lbl.oninput = (e) => { blocks[bIdx].items[iIdx].label = e.target.value; updateState(); };
+            
+            // Reorder
+            const up = document.createElement('button'); up.className = 'sub-btn-mov'; up.innerText = '↑';
+            up.onclick = () => moveItem(bIdx, 'items', iIdx, -1);
+            const down = document.createElement('button'); down.className = 'sub-btn-mov'; down.innerText = '↓';
+            down.onclick = () => moveItem(bIdx, 'items', iIdx, 1);
+            
+            row.appendChild(check);
+            row.appendChild(lbl);
+            row.appendChild(up);
+            row.appendChild(down);
+            
+            // LIFE LOGIC
+            if(item.type === 'life') {
+                const lifeRow = document.createElement('div');
+                lifeRow.style.width = "100%"; lifeRow.style.display = "flex"; lifeRow.style.gap = "5px"; lifeRow.style.marginTop = "5px";
+                lifeRow.innerHTML = `
+                    <div style="flex:1"><label style="font-size:0.7em">Birth Date</label><input type="date" value="${item.dob || '1990-01-01'}" oninput="updateSubItem(${bIdx}, 'items', ${iIdx}, 'dob', this.value)"></div>
+                    <div style="width:80px"><label style="font-size:0.7em">Exp. Age</label><input type="number" value="${item.expectancy || 80}" oninput="updateSubItem(${bIdx}, 'items', ${iIdx}, 'expectancy', this.value)"></div>
+                `;
+                row.appendChild(lifeRow);
+            }
+            
+            container.appendChild(row);
+        });
+    }
+
+    // --- STANDARD DATE RENDERER ---
     function renderDateList(bIdx, key, array) {
         const container = document.getElementById(`sub-list-${key==='line1'?'l1':'l2'}-${bIdx}`);
         if(!container) return;
@@ -366,6 +442,7 @@
         });
     }
 
+    // --- LOGIC HELPERS ---
     window.updateState = () => {
         settings.use24h = document.getElementById('set-time').value === '24';
         settings.theme = document.getElementById('set-theme').value;
@@ -375,18 +452,23 @@
 
     window.updateBlock = (i, k, v) => { blocks[i][k] = v; updateState(); };
     window.updateSubItem = (bI, k, iI, f, v) => { blocks[bI][k][iI][f] = v; updateState(); };
+    
     window.addSubItem = (bI, k) => { 
-        if(k==='locations') blocks[bI][k].push({label:'New City', timezone:'UTC'});
-        if(k==='items') blocks[bI][k].push({label:'New Bar', type:'month'});
+        if(k==='locations') blocks[bI][k].push({label:'London', timezone:'Europe/London'});
         renderBlocks(); updateState();
     };
-    window.addDateItem = (bI, key) => {
-        if(!blocks[bI][key]) blocks[bI][key] = [];
-        blocks[bI][key].push('separator'); 
-        renderBlocks(); updateState();
-    };
+    
+    window.addDateItem = (bI, key) => { if(!blocks[bI][key]) blocks[bI][key] = []; blocks[bI][key].push('separator'); renderBlocks(); updateState(); };
     window.removeSubItem = (bI, k, iI) => { blocks[bI][k].splice(iI, 1); renderBlocks(); updateState(); };
     
+    window.moveItem = (bI, k, iI, dir) => {
+        const arr = blocks[bI][k];
+        if (iI + dir >= 0 && iI + dir < arr.length) {
+            [arr[iI], arr[iI + dir]] = [arr[iI + dir], arr[iI]];
+            renderBlocks(); updateState();
+        }
+    };
+
     window.addBlock = (t) => {
         let b = { type: t };
         if(t=='header') b.text='Title';
@@ -395,13 +477,23 @@
             b.line1=['day_name_full', 'month_full', 'date_num'];
             b.line2=['week_num', 'separator', 'quarter'];
         }
-        if(t=='progress_group') b.items=[{type:'year',label:'Year'}];
+        // AUTO PROGRESS PRE-FILL (Life/Year/Month/Week/Day)
+        if(t=='progress_group') {
+            b.items = [
+                {type:'life', label:'Life', visible:true, dob:'1990-01-01', expectancy:85},
+                {type:'year', label:'Year', visible:true},
+                {type:'month', label:'Month', visible:true},
+                {type:'week', label:'Week', visible:true},
+                {type:'day', label:'Day', visible:true}
+            ];
+        }
         if(t=='progress_custom') { b.label='Goal'; b.start='2026-01-01'; b.end='2026-12-31'; }
         if(t=='progress_cycle') { b.label='Cycle'; b.anchor='2026-01-01'; b.days='28'; }
         if(t=='countdown') { b.label='Event'; b.date='2026-12-31'; b.style='standard'; }
         if(t=='timer') { b.label='Focus'; b.hours=0; b.minutes=25; }
         blocks.push(b); renderBlocks(); updateState();
     };
+    
     window.removeBlock = (i) => { blocks.splice(i, 1); renderBlocks(); updateState(); };
 
     function handleDrop(e) {
