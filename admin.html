@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Widget Admin Fixed</title>
+    <title>Widget Admin V9</title>
     <style>
-        /* LAYOUT */
+        /* CORE LAYOUT */
         html, body { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f7f7f5; color: #37352f; }
         .panel-left { width: 50%; height: 100%; background: #fff; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; }
         .panel-right { width: 50%; height: 100%; background: #eef0f2; padding: 25px; box-sizing: border-box; display: flex; flex-direction: column; }
@@ -15,7 +15,7 @@
         .preview-wrapper { flex-grow: 1; width: 100%; background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden; border: 1px solid #ccc; display: flex; flex-direction: column; }
         .preview-toolbar { padding: 10px; background: #dfe1e6; border-bottom: 1px solid #ccc; display: flex; justify-content: center; align-items: center; }
         .preview-label { font-size: 0.75rem; font-weight: bold; color: #555; text-transform: uppercase; letter-spacing: 1px;}
-        iframe { flex-grow: 1; width: 100%; height: 100%; border: none; background: white; display: block; }
+        iframe { flex-grow: 1; width: 100%; border: none; background: white; display: block; }
 
         /* UI ELEMENTS */
         h1 { margin: 0; font-size: 1.5rem; letter-spacing: -0.5px; }
@@ -23,6 +23,7 @@
         .dark-section { background: #34495e; padding: 15px; border-radius: 8px; color: white; flex-shrink: 0; }
         .dark-section h2 { color: rgba(255,255,255,0.7); border-bottom-color: rgba(255,255,255,0.2); }
         .dark-section label { color: rgba(255,255,255,0.9); }
+        
         .action-area { padding: 15px; background: #2c3e50; border-radius: 8px; color: white; }
         .link-box { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px; font-family: monospace; font-size: 0.75rem; word-break: break-all; margin-bottom: 10px; max-height: 45px; overflow-y: auto; color: #aeb6bf; }
         .action-btns { display: flex; gap: 8px; }
@@ -31,7 +32,7 @@
         .btn-copy { background: #27ae60; flex: 2; border: 1px solid #2ecc71; } .btn-copy:hover { background: #219150; }
         .btn-open { background: #7f8c8d; flex: 0; min-width: 40px; font-size: 1.2rem; padding: 0; display:flex; align-items:center; justify-content:center;} .btn-open:hover { background: #95a5a6; }
 
-        /* BLOCKS & LISTS */
+        /* BLOCKS */
         .block-card { background: white; border: 1px solid #e0e0e0; border-radius: 6px; margin-bottom: 8px; border-left: 4px solid #999; transition: all 0.2s; }
         .block-header { padding: 10px 15px; cursor: pointer; display: flex; align-items: center; gap: 10px; background: #fbfbfa; user-select: none; }
         .block-header:hover { background: #f2f2f2; }
@@ -40,12 +41,13 @@
         .block-card.open .toggle-icon { transform: rotate(180deg); }
         .block-content { padding: 15px; border-top: 1px solid #f0f0f0; display: none; }
         .block-card.open .block-content { display: block; }
+        
         .sub-list { margin-bottom: 10px; border: 1px solid #eee; padding: 10px; border-radius: 4px; background: #fafafa; }
         .sub-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; flex-wrap: nowrap; } 
         .sub-item select, .sub-item input { flex-grow: 1; width: auto; min-width: 0; } 
         .sub-btn-add { background: #e0e0e0; border: none; font-size: 0.7rem; padding: 4px 8px; cursor: pointer; border-radius: 3px; }
-        .sub-btn-rem { background: #ffdede; color: red; border: none; cursor: pointer; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; } 
-        .sub-btn-mov { background: #f0f0f0; border: 1px solid #ddd; cursor: pointer; width: 20px; height: 20px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: #666; flex-shrink: 0;}
+        .sub-btn-rem { background: #ffdede; color: red; border: none; cursor: pointer; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
+        .sub-btn-mov { background: #f0f0f0; border: 1px solid #ddd; cursor: pointer; width: 20px; height: 20px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: #666; flex-shrink: 0; }
 
         .type-header { border-left-color: #bdc3c7; } .type-world_clock { border-left-color: #1abc9c; }
         .type-date_display { border-left-color: #2ecc71; } .type-progress_group { border-left-color: #e67e22; }
@@ -120,7 +122,7 @@
 <div class="panel-right">
     <div class="preview-wrapper">
         <div class="preview-toolbar"><span class="preview-label">Live Preview</span></div>
-        <iframe id="preview-frame" src="index.html"></iframe>
+        <iframe id="preview-frame" src=""></iframe>
     </div>
 </div>
 
@@ -129,7 +131,7 @@
     let blocks = [];
     let dragSrc = null;
     
-    // CITY DB
+    // CITY DATABASE
     const cityDB = [
         {name: "New York, USA", tz: "America/New_York"}, {name: "London, UK", tz: "Europe/London"},
         {name: "Tokyo, Japan", tz: "Asia/Tokyo"}, {name: "Paris, France", tz: "Europe/Paris"},
@@ -163,6 +165,7 @@
         {name: "Santiago, Chile", tz: "America/Santiago"}, {name: "Caracas, Venezuela", tz: "America/Caracas"}
     ];
 
+    // DATE TOKENS
     const dateTokens = [
         {val: 'day_name_full', txt: 'Day Name (Monday)'},
         {val: 'day_name_short', txt: 'Day Name (Mon)'},
@@ -172,7 +175,7 @@
         {val: 'month_num', txt: 'Month Number (01)'},
         {val: 'year', txt: 'Year (2026)'},
         {val: 'week_num', txt: 'Week Number'},
-        {val: 'day_year', txt: 'Day of Year'},
+        {val: 'day_year', txt: 'Day of Year (Day 28 of 365)'},
         {val: 'quarter', txt: 'Quarter (Q1)'},
         {val: 'separator', txt: 'Separator (|)'}
     ];
@@ -190,18 +193,22 @@
             } else { blocks = [{ type: 'header', text: 'Welcome' }]; }
         } catch(e) { console.error(e); }
         renderBlocks();
-        setTimeout(refreshPreview, 500);
+        setTimeout(refreshPreview, 100);
     }
 
-    // FIXED REFRESH: Uses pure relative path for local preview to avoid file:// security blocks
+    // --- RESTORED V6 REFRESH LOGIC ---
     window.refreshPreview = () => {
-        const json = JSON.stringify({ settings, blocks });
-        const encoded = btoa(json);
-        const iframe = document.getElementById('preview-frame');
-        // This relies on index.html being in the same folder.
-        // It updates the Hash, which index.html is polling for.
-        iframe.src = "index.html#" + encoded;
-        generateLink(); // Update the copy box separately
+        // This generates the absolute path with file://
+        const raw = generateLink(); 
+        
+        // We split it to inject the timestamp before the hash
+        const parts = raw.split('#');
+        
+        // This forces the iframe to treat it as a new request
+        const url = `${parts[0]}?t=${Date.now()}#${parts[1]}`;
+        
+        const frame = document.getElementById('preview-frame');
+        if(frame) frame.src = url;
     };
 
     window.updateBlockAndRender = (idx, key, val) => {
@@ -316,7 +323,6 @@
             
             const wrapper = document.createElement('div');
             wrapper.className = 'city-search-wrapper';
-            
             const input = document.createElement('input');
             input.placeholder = "Search City (e.g. London)";
             input.value = item.label || '';
@@ -324,16 +330,12 @@
             
             const results = document.createElement('div');
             results.className = 'city-results';
-            
-            wrapper.appendChild(input);
-            wrapper.appendChild(results);
+            wrapper.appendChild(input); wrapper.appendChild(results);
             
             const del = document.createElement('button'); del.className = 'sub-btn-rem'; del.innerText = '×';
             del.onclick = () => removeSubItem(bIdx, 'locations', iIdx);
 
-            row.appendChild(wrapper);
-            row.appendChild(del);
-            container.appendChild(row);
+            row.appendChild(wrapper); row.appendChild(del); container.appendChild(row);
         });
     }
 
@@ -389,10 +391,7 @@
             const down = document.createElement('button'); down.className = 'sub-btn-mov'; down.innerText = '↓';
             down.onclick = () => moveItem(bIdx, 'items', iIdx, 1);
             
-            row.appendChild(check);
-            row.appendChild(lbl);
-            row.appendChild(up);
-            row.appendChild(down);
+            row.appendChild(check); row.appendChild(lbl); row.appendChild(up); row.appendChild(down);
             
             if(item.type === 'life') {
                 const lifeRow = document.createElement('div');
@@ -424,7 +423,7 @@
         settings.use24h = document.getElementById('set-time').value === '24';
         settings.theme = document.getElementById('set-theme').value;
         settings.fontSize = document.getElementById('set-font').value;
-        refreshPreview(); // Use helper which calls generateLink internally
+        refreshPreview(); // Re-calls the restored refreshPreview
     };
 
     window.updateBlock = (i, k, v) => { blocks[i][k] = v; updateState(); };
