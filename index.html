@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notion Widget V7</title>
+    <title>Notion Widget V7.1</title>
     <style>
         :root {
             --bg-color: #FFFFFF; --text-color: #37352F; --accent-color: #E3E2E0;
@@ -251,7 +251,7 @@
                     case 'day_name_short': return now.toLocaleDateString([], {weekday:'short'});
                     case 'month_full': return now.toLocaleDateString([], {month:'long'});
                     case 'month_short': return now.toLocaleDateString([], {month:'short'});
-                    case 'month_num': return (now.getMonth() + 1).toString().padStart(2, '0'); // NEW: Month Number
+                    case 'month_num': return (now.getMonth() + 1).toString().padStart(2, '0');
                     case 'date_num': return now.getDate();
                     case 'year': return now.getFullYear();
                     case 'week_num': return `Week ${getWeekNumber(now)}`;
