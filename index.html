@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notion Widget V7.1</title>
+    <title>Notion Widget V8</title>
     <style>
         :root {
             --bg-color: #FFFFFF; --text-color: #37352F; --accent-color: #E3E2E0;
@@ -145,7 +145,22 @@
         function renderDateDisplay(data, parent) { 
             parent.innerHTML = `<div class="date-display" id="date-main-${parent.id}"></div><div class="date-sub" id="date-sub-${parent.id}"></div>`; 
         }
-        function renderProgressGroup(data, parent) { data.items.forEach(item => { const dates = getDatesForType(item.type); if(dates) parent.appendChild(createBarElement(item.label, dates.start, dates.end, false)); }); }
+        function renderProgressGroup(data, parent) { 
+            data.items.forEach(item => { 
+                if (item.visible !== false) {
+                    let dates;
+                    if(item.type === 'life') {
+                        const start = new Date(item.dob || '1990-01-01');
+                        const end = new Date(start);
+                        end.setFullYear(end.getFullYear() + parseInt(item.expectancy || 80));
+                        dates = { start, end };
+                    } else {
+                        dates = getDatesForType(item.type);
+                    }
+                    if(dates) parent.appendChild(createBarElement(item.label, dates.start, dates.end, false)); 
+                }
+            }); 
+        }
         function renderCustomBar(data, parent) { parent.appendChild(createBarElement(data.label, new Date(data.start), new Date(data.end), false)); }
         function renderCycleProgress(data, parent, id) { 
             const wrapper = createBarElement(data.label, null, null, true, `block-${id}`);
