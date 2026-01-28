@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notion Widget V1</title>
+    <title>Notion Widget V3</title>
     <style>
         :root {
             --bg-color: #FFFFFF;
@@ -12,10 +12,25 @@
             --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
             --base-size: 16px;
 
-            /* Notion Palette */
-            --c-gray: #9B9A97; --c-brown: #64473A; --c-orange: #D9730D;
-            --c-yellow: #DFAB01; --c-green: #0F7B6C; --c-blue: #0B6E99;
-            --c-purple: #6940A5; --c-pink: #AD1A72; --c-red: #E03E3E;
+            /* Full Palette */
+            --c-gray: #9B9A97; 
+            --c-brown: #64473A; 
+            --c-orange: #D9730D;
+            --c-yellow: #DFAB01; 
+            --c-green: #0F7B6C; 
+            --c-blue: #0B6E99;
+            --c-purple: #6940A5; 
+            --c-pink: #AD1A72; 
+            --c-red: #E03E3E;
+            
+            /* Extended */
+            --c-slate: #34495e;
+            --c-teal: #1abc9c;
+            --c-cyan: #00b8d4;
+            --c-indigo: #3f51b5;
+            --c-lime: #82c91e;
+            --c-amber: #f39c12;
+            --c-rose: #e91e63;
         }
         @media (prefers-color-scheme: dark) {
             :root {
@@ -29,7 +44,7 @@
             min-height: 100vh; position: relative;
         }
 
-        /* LAYOUT GRID */
+        /* LAYOUT */
         #dashboard { 
             display: flex; flex-wrap: wrap; gap: 1.5rem; 
             max-width: 800px; margin: 0 auto; align-items: flex-start;
@@ -37,18 +52,17 @@
         .widget-block { width: 100%; box-sizing: border-box; }
         .widget-block.half-width { width: calc(50% - 0.75rem); }
 
-        /* THEMES */
+        /* VISUALS */
         .theme-card .widget-block { border: 1px solid var(--accent-color); padding: 1rem; border-radius: 8px; }
         .theme-minimal .clock-time, .theme-minimal .countdown-time { font-weight: 400 !important; }
         .theme-minimal .progress-bg { height: 4px !important; }
 
-        /* TYPOGRAPHY */
         .widget-header { 
             font-size: 0.75em; text-transform: uppercase; letter-spacing: 1px; opacity: 0.6; 
             margin-bottom: 0.5rem; font-weight: 600; color: var(--block-color, inherit);
         }
         
-        /* CLOCKS */
+        /* COMPONENTS */
         .clock-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--accent-color); padding: 0.5rem 0; }
         .clock-row:last-child { border-bottom: none; }
         .clock-left { display: flex; flex-direction: column; }
@@ -56,27 +70,22 @@
         .clock-date { font-size: 0.75em; opacity: 0.6; }
         .clock-time { font-family: "SF Mono", monospace; font-weight: 700; color: var(--block-color, inherit); font-size: 1.1em; }
 
-        /* PROGRESS */
         .progress-wrapper { margin-bottom: 0.75rem; }
         .progress-meta { display: flex; justify-content: space-between; font-size: 0.85em; margin-bottom: 0.25rem; font-weight: 500; }
         .progress-bg { height: 10px; background-color: var(--accent-color); border-radius: 5px; overflow: hidden; }
         .progress-fill { height: 100%; background-color: var(--block-color, var(--text-color)); width: 0%; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
 
-        /* COUNTDOWN */
         .countdown-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
         .countdown-time { font-family: "SF Mono", monospace; font-weight: 700; background: var(--accent-color); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; color: var(--block-color, inherit); }
 
-        /* DATE BLOCK */
         .date-display { font-size: 1.5em; font-weight: 700; color: var(--block-color, inherit); }
         .date-sub { font-size: 0.9em; opacity: 0.7; }
 
-        /* TIMER */
         .timer-container { text-align: center; padding: 10px; background: var(--accent-color); border-radius: 8px; }
         .timer-display { font-size: 2em; font-weight: 700; font-family: "SF Mono", monospace; margin: 10px 0; color: var(--block-color, inherit); }
         .timer-controls { display: flex; gap: 10px; justify-content: center; }
         .timer-btn { background: var(--bg-color); color: var(--text-color); border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em; font-weight: 600; flex:1;}
         
-        /* EDIT BTN */
         #edit-btn {
             position: fixed; bottom: 10px; right: 10px; background: var(--text-color); color: var(--bg-color);
             width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
@@ -142,242 +151,118 @@
             updateDynamicElements(data.blocks, settings);
         }
 
-        // --- RENDERERS ---
-        function renderHeader(data, parent) {
-            const el = document.createElement('div');
-            el.className = 'widget-header';
-            el.innerText = data.text;
-            parent.appendChild(el);
-        }
-
+        function renderHeader(data, parent) { const el = document.createElement('div'); el.className = 'widget-header'; el.innerText = data.text; parent.appendChild(el); }
         function renderWorldClock(data, parent) {
-            // Static Structure
             data.locations.forEach((loc, i) => {
-                const row = document.createElement('div');
-                row.className = 'clock-row';
-                // Note: We use Intl API to try and get abbreviation
-                row.innerHTML = `
-                    <div class="clock-left">
-                        <span class="clock-city">${loc.label} <span class="clock-abbr" id="abbr-${parent.id}-${i}" style="font-weight:400; opacity:0.6; font-size:0.9em;"></span></span>
-                        <span class="clock-date" id="date-${parent.id}-${i}">--</span>
-                    </div>
-                    <span class="clock-time" id="clock-${parent.id}-${i}">--:--</span>
-                `;
+                const row = document.createElement('div'); row.className = 'clock-row';
+                row.innerHTML = `<div class="clock-left"><span class="clock-city">${loc.label} <span class="clock-abbr" id="abbr-${parent.id}-${i}" style="font-weight:400; opacity:0.6; font-size:0.9em;"></span></span><span class="clock-date" id="date-${parent.id}-${i}">--</span></div><span class="clock-time" id="clock-${parent.id}-${i}">--:--</span>`;
                 parent.appendChild(row);
             });
         }
-
-        function renderDateDisplay(data, parent) {
-            const wrapper = document.createElement('div');
-            wrapper.innerHTML = `<div class="date-display" id="date-main-${parent.id}"></div><div class="date-sub" id="date-sub-${parent.id}"></div>`;
-            parent.appendChild(wrapper);
-        }
-
-        function renderProgressGroup(data, parent) {
-            data.items.forEach(item => {
-                const dates = getDatesForType(item.type);
-                if(dates) parent.appendChild(createBarElement(item.label, dates.start, dates.end));
-            });
-        }
-        function renderCustomBar(data, parent) {
-            parent.appendChild(createBarElement(data.label, new Date(data.start), new Date(data.end)));
-        }
-        function renderCycleProgress(data, parent) {
-            parent.appendChild(createBarElement(data.label, null, null, true, data.anchor, data.days));
-        }
-        function renderCountdown(data, parent) {
-            const row = document.createElement('div');
-            row.className = 'countdown-row';
-            row.innerHTML = `<span class="countdown-label">${data.label}</span><span class="countdown-time" id="cnt-${parent.id}">--</span>`;
-            parent.appendChild(row);
-        }
+        function renderDateDisplay(data, parent) { parent.innerHTML = `<div class="date-display" id="date-main-${parent.id}"></div><div class="date-sub" id="date-sub-${parent.id}"></div>`; }
+        function renderProgressGroup(data, parent) { data.items.forEach(item => { const dates = getDatesForType(item.type); if(dates) parent.appendChild(createBarElement(item.label, dates.start, dates.end)); }); }
+        function renderCustomBar(data, parent) { parent.appendChild(createBarElement(data.label, new Date(data.start), new Date(data.end))); }
+        function renderCycleProgress(data, parent) { parent.appendChild(createBarElement(data.label, null, null, true, data.anchor, data.days)); }
+        function renderCountdown(data, parent) { parent.innerHTML = `<div class="countdown-row"><span class="countdown-label">${data.label}</span><span class="countdown-time" id="cnt-${parent.id}">--</span></div>`; }
         function renderTimer(data, parent, id) {
-            const hrs = parseInt(data.hours)||0; const mins = parseInt(data.minutes)||0;
-            const total = (hrs*60)+mins;
-            const label = hrs>0 ? `${hrs}h ${mins}m` : `${mins}m`;
-            const wrapper = document.createElement('div');
-            wrapper.className = 'timer-container';
-            wrapper.innerHTML = `<div style="font-size:0.8em; opacity:0.7;">${data.label||'Timer'}</div><div class="timer-display" id="timer-display-${id}">00:00</div><div class="timer-controls"><button class="timer-btn" onclick="startTimer(${id}, ${total})">Start ${label}</button><button class="timer-btn" style="color:#eb5757" onclick="stopTimer(${id})">Stop</button></div>`;
-            parent.appendChild(wrapper);
+            const hrs = parseInt(data.hours)||0; const mins = parseInt(data.minutes)||0; const total = (hrs*60)+mins; const label = hrs>0 ? `${hrs}h ${mins}m` : `${mins}m`;
+            parent.innerHTML = `<div class="timer-container"><div style="font-size:0.8em; opacity:0.7;">${data.label||'Timer'}</div><div class="timer-display" id="timer-display-${id}">00:00</div><div class="timer-controls"><button class="timer-btn" onclick="startTimer(${id}, ${total})">Start ${label}</button><button class="timer-btn" style="color:#eb5757" onclick="stopTimer(${id})">Stop</button></div></div>`;
         }
 
-        // --- UPDATE LOOP ---
         function updateDynamicElements(blocks, settings) {
             const now = new Date();
             const use24h = settings.use24h === true;
-
             blocks.forEach((block, bIdx) => {
-                // 1. CLOCKS
                 if (block.type === 'world_clock') {
                     block.locations.forEach((loc, lIdx) => {
                         try {
                             const timeEl = document.getElementById(`clock-block-${bIdx}-${lIdx}`);
                             const dateEl = document.getElementById(`date-block-${bIdx}-${lIdx}`);
                             const abbrEl = document.getElementById(`abbr-block-${bIdx}-${lIdx}`);
-                            
                             if(timeEl) {
                                 const tz = (loc.timezone && loc.timezone !== 'local') ? loc.timezone : undefined;
-                                
-                                // Time
-                                const tOpts = { hour: use24h?'2-digit':'numeric', minute:'2-digit', hour12: !use24h };
-                                if(tz) tOpts.timeZone = tz;
-                                let tStr = now.toLocaleTimeString([], tOpts);
-                                if(!use24h) tStr = tStr.replace(' ', '');
+                                const tOpts = { hour: use24h?'2-digit':'numeric', minute:'2-digit', hour12: !use24h }; if(tz) tOpts.timeZone = tz;
+                                let tStr = now.toLocaleTimeString([], tOpts); if(!use24h) tStr = tStr.replace(' ', '');
                                 timeEl.innerText = tStr;
-
-                                // Date
-                                const dOpts = { weekday: 'short', month: 'short', day: 'numeric' };
-                                if(tz) dOpts.timeZone = tz;
+                                const dOpts = { weekday: 'short', month: 'short', day: 'numeric' }; if(tz) dOpts.timeZone = tz;
                                 dateEl.innerText = now.toLocaleDateString([], dOpts);
-
-                                // Abbreviation (Auto-detected)
                                 if(abbrEl && abbrEl.innerText === '') {
-                                    const aOpts = { timeZoneName: 'short' };
-                                    if(tz) aOpts.timeZone = tz;
+                                    const aOpts = { timeZoneName: 'short' }; if(tz) aOpts.timeZone = tz;
                                     const parts = new Intl.DateTimeFormat('en-US', aOpts).formatToParts(now);
-                                    const tzName = parts.find(p => p.type === 'timeZoneName');
-                                    if(tzName && tzName.value) abbrEl.innerText = `(${tzName.value})`;
+                                    const tzName = parts.find(p => p.type === 'timeZoneName'); if(tzName && tzName.value) abbrEl.innerText = `(${tzName.value})`;
                                 }
                             }
                         } catch(e) {}
                     });
                 }
-
-                // 2. DATE DISPLAY
                 if (block.type === 'date_display') {
                     const mEl = document.getElementById(`date-main-block-${bIdx}`);
                     const sEl = document.getElementById(`date-sub-block-${bIdx}`);
                     if(mEl) {
-                        const style = block.style || 'full';
-                        if(style === 'full') {
-                            mEl.innerText = now.toLocaleDateString([], { weekday:'long', month:'long', day:'numeric'});
-                            sEl.innerText = `Week ${getWeekNumber(now)}`;
-                        } else if (style === 'simple') {
-                            mEl.innerText = now.toLocaleDateString([], { month:'short', day:'numeric'});
-                            sEl.innerText = now.getFullYear();
-                        } else if (style === 'week') {
-                            mEl.innerText = `Week ${getWeekNumber(now)}`;
-                            sEl.innerText = `Day ${getDayOfYear(now)} of 365`;
-                        }
+                        if(block.style === 'full') { mEl.innerText = now.toLocaleDateString([], { weekday:'long', month:'long', day:'numeric'}); sEl.innerText = `Week ${getWeekNumber(now)}`; }
+                        else if (block.style === 'simple') { mEl.innerText = now.toLocaleDateString([], { month:'short', day:'numeric'}); sEl.innerText = now.getFullYear(); }
+                        else if (block.style === 'week') { mEl.innerText = `Week ${getWeekNumber(now)}`; sEl.innerText = `Day ${getDayOfYear(now)} of 365`; }
                     }
                 }
-
-                // 3. COUNTDOWN
                 if (block.type === 'countdown') {
                     const el = document.getElementById(`cnt-block-${bIdx}`);
                     if(el) {
-                        // Default to midnight start of date
-                        const target = new Date(block.date);
-                        target.setHours(0,0,0,0);
-                        
+                        const target = new Date(block.date); target.setHours(0,0,0,0);
                         const diff = target - now;
-                        if (diff <= 0) {
-                            el.innerText = "Done";
-                        } else {
+                        if (diff <= 0) el.innerText = "Done";
+                        else {
                             const d = Math.floor(diff / (1000 * 60 * 60 * 24));
                             const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                             const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-                            if (block.style === 'standard') el.innerText = `${d+1} Days`; // Round up
+                            if (block.style === 'standard') el.innerText = `${d+1} Days`;
                             else if (block.style === 'precise') el.innerText = `${d}d ${h}h`;
-                            else el.innerText = `${d}d ${h}h ${m}m`; // Full
+                            else el.innerText = `${d}d ${h}h ${m}m`;
                         }
                     }
                 }
-
-                // 4. CYCLE
                 if (block.type === 'progress_cycle') {
-                    const anchor = new Date(block.anchor);
-                    const days = parseFloat(block.days) || 1;
-                    const duration = days * 86400000;
+                    const anchor = new Date(block.anchor); const days = parseFloat(block.days) || 1; const duration = days * 86400000;
                     let elapsed = now - anchor;
                     if(elapsed < 0) updateBar(`block-${bIdx}`, 0);
-                    else {
-                        const pct = ((elapsed % duration) / duration) * 100;
-                        updateBar(`block-${bIdx}`, pct);
-                    }
+                    else { const pct = ((elapsed % duration) / duration) * 100; updateBar(`block-${bIdx}`, pct); }
                 }
-                
-                // 5. TIMER
                 if (block.type === 'timer') updateTimerDisplay(bIdx);
             });
         }
 
-        // --- HELPERS ---
         function updateBar(id, pct) {
-            const bar = document.getElementById(`cycle-bar-${id}`);
-            const txt = document.getElementById(`cycle-pct-${id}`);
-            if(bar && txt) {
-                bar.style.width = `${pct}%`;
-                txt.innerText = `${pct.toFixed(1)}%`;
-            }
+            const bar = document.getElementById(`cycle-bar-${id}`); const txt = document.getElementById(`cycle-pct-${id}`);
+            if(bar && txt) { bar.style.width = `${pct}%`; txt.innerText = `${pct.toFixed(1)}%`; }
         }
         function createBarElement(label, start, end, isCycle, anchor, days) {
-            // Re-used for both static and cycles, logic handled in update loop for cycle
             let pct = 0;
-            if(!isCycle) {
-                const now = new Date();
-                if(now > end) pct = 100;
-                else if(now > start) pct = ((now - start) / (end - start)) * 100;
-            }
-            const wrapper = document.createElement('div');
-            wrapper.className = 'progress-wrapper';
-            // IDs needed for cycle updates
+            if(!isCycle) { const now = new Date(); if(now > end) pct = 100; else if(now > start) pct = ((now - start) / (end - start)) * 100; }
+            const wrapper = document.createElement('div'); wrapper.className = 'progress-wrapper';
             const idSuffix = isCycle ? '' : `-${Math.random().toString(36).substr(2,5)}`; 
-            
-            // Note: Cycles get IDs assigned in render loop, static ones here
-            // But to simplify, static bars don't update dynamically in this loop version except re-render
-            // We focus on structure here.
-            
             wrapper.innerHTML = `<div class="progress-meta"><span>${label}</span><span id="cycle-pct${idSuffix}">${pct.toFixed(1)}%</span></div><div class="progress-bg"><div class="progress-fill" id="cycle-bar${idSuffix}" style="width: ${pct}%"></div></div>`;
             return wrapper;
         }
-
         function getDatesForType(type) {
-            const now = new Date();
-            const y = now.getFullYear(), m = now.getMonth();
+            const now = new Date(); const y = now.getFullYear(), m = now.getMonth();
             if (type === 'day') return { start: new Date(y, m, now.getDate()), end: new Date(y, m, now.getDate(), 23, 59, 59) };
-            if (type === 'week') { 
-                const d = now.getDay(); 
-                const diff = now.getDate() - d + (d === 0 ? -6 : 1); // Monday start
-                const s = new Date(now.setDate(diff)); s.setHours(0,0,0,0);
-                const e = new Date(s); e.setDate(s.getDate() + 7); 
-                return { start: s, end: e }; 
-            }
+            if (type === 'week') { const d = now.getDay(); const diff = now.getDate() - d + (d === 0 ? -6 : 1); const s = new Date(now.setDate(diff)); s.setHours(0,0,0,0); const e = new Date(s); e.setDate(s.getDate() + 7); return { start: s, end: e }; }
             if (type === 'month') return { start: new Date(y, m, 1), end: new Date(y, m + 1, 0) };
             if (type === 'year') return { start: new Date(y, 0, 1), end: new Date(y + 1, 0, 1) };
             return null;
         }
-
-        function getWeekNumber(d) {
-            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
-            const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-            return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
-        }
-        function getDayOfYear(d) {
-            const start = new Date(d.getFullYear(), 0, 0);
-            const diff = d - start;
-            const oneDay = 1000 * 60 * 60 * 24;
-            return Math.floor(diff / oneDay);
-        }
-
-        // Bulletproof Timer Logic
+        function getWeekNumber(d) { d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7)); const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1)); return Math.ceil((((d - yearStart) / 86400000) + 1)/7); }
+        function getDayOfYear(d) { const start = new Date(d.getFullYear(), 0, 0); const diff = d - start; return Math.floor(diff / (1000 * 60 * 60 * 24)); }
         window.startTimer = (id, m) => { localStorage.setItem(`notion_timer_${id}`, new Date().getTime() + (m * 60000)); updateTimerDisplay(id); };
         window.stopTimer = (id) => { localStorage.removeItem(`notion_timer_${id}`); updateTimerDisplay(id); };
         function updateTimerDisplay(id) {
-            const el = document.getElementById(`timer-display-${id}`);
-            const end = localStorage.getItem(`notion_timer_${id}`);
+            const el = document.getElementById(`timer-display-${id}`); const end = localStorage.getItem(`notion_timer_${id}`);
             if (!end) { el.innerText = "00:00"; return; }
             const dist = end - new Date().getTime();
             if (dist < 0) { el.innerText = "Done!"; localStorage.removeItem(`notion_timer_${id}`); return; }
-            const m = Math.floor(dist / 60000);
-            const s = Math.floor((dist % 60000) / 1000);
+            const m = Math.floor(dist / 60000); const s = Math.floor((dist % 60000) / 1000);
             el.innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
         }
-
-        render();
-        setInterval(() => { const d = getConfig(); if(d) updateDynamicElements(d.blocks, d.settings); }, 1000);
+        render(); setInterval(() => { const d = getConfig(); if(d) updateDynamicElements(d.blocks, d.settings); }, 1000);
     </script>
 </body>
 </html>
