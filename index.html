@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notion Widget V12</title>
+    <title>Notion Widget V14</title>
     <style>
         :root {
             --bg-color: #FFFFFF; --text-color: #37352F; --accent-color: #E3E2E0;
@@ -48,11 +48,12 @@
         .progress-bg { height: 10px; background-color: var(--accent-color); border-radius: 5px; overflow: hidden; }
         .progress-fill { height: 100%; background-color: var(--block-color, var(--text-color)); width: 0%; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
         
+        /* CYCLE RESET BUTTON (Critical for Manual Reset) */
         .cycle-reset-btn { 
             background: none; border: 1px solid var(--text-color); 
             color: var(--text-color); font-size: 0.7rem; padding: 2px 6px; 
             border-radius: 4px; cursor: pointer; margin-left: 8px; 
-            opacity: 0.7; transition: opacity 0.2s; pointer-events: auto; /* Force click */
+            opacity: 0.7; transition: opacity 0.2s; pointer-events: auto;
         }
         .cycle-reset-btn:hover { opacity: 1; background: var(--accent-color); }
 
@@ -70,6 +71,7 @@
         .timer-controls { display: flex; gap: 10px; justify-content: center; }
         .timer-btn { background: var(--bg-color); color: var(--text-color); border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em; font-weight: 600; flex:1;}
         
+        /* EDIT BTN */
         #edit-btn {
             position: fixed; bottom: 10px; right: 10px; background: var(--text-color); color: var(--bg-color);
             width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
@@ -114,6 +116,7 @@
                 blockDiv.id = `block-${index}`;
                 if (block.width === '50') blockDiv.classList.add('half-width');
                 if (block.color && block.color !== 'default') {
+                    // SUPPORTS HEX CODES FROM PICKER
                     const val = block.color.startsWith('#') ? block.color : `var(--c-${block.color})`;
                     blockDiv.style.setProperty('--block-color', val);
                 }
@@ -132,6 +135,7 @@
             updateDynamicElements(data.blocks, settings);
         }
 
+        // AUTO-UPDATE LISTENER
         window.addEventListener('hashchange', render);
 
         function renderHeader(data, parent) { const el = document.createElement('div'); el.className = 'widget-header'; el.innerText = data.text; parent.appendChild(el); }
@@ -164,10 +168,13 @@
             }); 
         }
         function renderCustomBar(data, parent) { parent.appendChild(createBarElement(data.label, new Date(data.start), new Date(data.end), false)); }
+        
         function renderCycleProgress(data, parent, id) { 
+            // Important: Generates ID based on Block Index for targeting
             const wrapper = createBarElement(data.label, null, null, true, `block-${id}`);
             parent.appendChild(wrapper);
         }
+        
         function renderCountdown(data, parent) { parent.innerHTML = `<div class="countdown-row"><span class="countdown-label">${data.label}</span><span class="countdown-time" id="cnt-${parent.id}">--</span></div>`; }
         function renderTimer(data, parent, id) {
             const hrs = parseInt(data.hours)||0; const mins = parseInt(data.minutes)||0; const total = (hrs*60)+mins; const label = hrs>0 ? `${hrs}h ${mins}m` : `${mins}m`;
@@ -239,20 +246,30 @@
                 if (block.type === 'progress_cycle') {
                     const resetMode = block.resetMode || 'auto';
                     let anchor = new Date(block.anchor);
+                    
+                    // MANUAL RESET LOGIC CHECK
                     if (resetMode === 'manual') {
                         const restartTs = localStorage.getItem(`cycle_reset_block-${bIdx}`);
                         if(restartTs) anchor = new Date(parseInt(restartTs));
                     }
+
                     const days = parseFloat(block.days) || 1; 
                     const duration = days * 86400000;
                     const elapsed = now - anchor;
                     let pct = 0; let isDone = false;
+
                     if(elapsed < 0) pct = 0;
                     else {
-                        if (resetMode === 'auto') pct = ((elapsed % duration) / duration) * 100;
-                        else { 
-                            if (elapsed >= duration) { pct = 100; isDone = true; } 
-                            else { pct = (elapsed / duration) * 100; } 
+                        if (resetMode === 'auto') {
+                            pct = ((elapsed % duration) / duration) * 100;
+                        } else {
+                            // Manual Mode
+                            if (elapsed >= duration) {
+                                pct = 100;
+                                isDone = true;
+                            } else {
+                                pct = (elapsed / duration) * 100;
+                            }
                         }
                     }
                     updateCycleBar(`block-${bIdx}`, pct, isDone);
@@ -292,7 +309,7 @@
             if(bar && txt) { 
                 bar.style.width = `${pct}%`; 
                 if (isDone) {
-                    // Manual Reset Logic Fix
+                    // Check if Reset Button Exists
                     if(!document.getElementById(`reset-btn-${id}`)) {
                         txt.innerHTML = `Completed <button id="reset-btn-${id}" class="cycle-reset-btn" onclick="resetCycle('${id}')">↻ Reset</button>`;
                     }
