@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notion Widget V5</title>
+    <title>Notion Widget V6</title>
     <style>
         :root {
             --bg-color: #FFFFFF; --text-color: #37352F; --accent-color: #E3E2E0;
@@ -48,7 +48,6 @@
         .progress-bg { height: 10px; background-color: var(--accent-color); border-radius: 5px; overflow: hidden; }
         .progress-fill { height: 100%; background-color: var(--block-color, var(--text-color)); width: 0%; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
         
-        /* RESET BUTTON */
         .cycle-reset-btn { 
             background: none; border: 1px solid var(--text-color); 
             color: var(--text-color); font-size: 0.7rem; padding: 2px 6px; 
@@ -146,13 +145,37 @@
         function renderDateDisplay(data, parent) { 
             parent.innerHTML = `<div class="date-display" id="date-main-${parent.id}"></div><div class="date-sub" id="date-sub-${parent.id}"></div>`; 
         }
-        function renderProgressGroup(data, parent) { data.items.forEach(item => { const dates = getDatesForType(item.type); if(dates) parent.appendChild(createBarElement(item.label, dates.start, dates.end, false)); }); }
+        
+        function renderProgressGroup(data, parent) { 
+            data.items.forEach(item => { 
+                // Visibility Toggle Check
+                if (item.visible !== false) {
+                    // Life Logic vs Regular Logic
+                    let dates;
+                    if(item.type === 'life') {
+                        // Calculated in loop, just pass placeholder
+                        const start = new Date(item.dob || '1990-01-01');
+                        const end = new Date(start);
+                        end.setFullYear(end.getFullYear() + parseInt(item.expectancy || 80));
+                        dates = { start, end };
+                    } else {
+                        dates = getDatesForType(item.type);
+                    }
+                    
+                    if(dates) parent.appendChild(createBarElement(item.label, dates.start, dates.end, false)); 
+                }
+            }); 
+        }
+        
         function renderCustomBar(data, parent) { parent.appendChild(createBarElement(data.label, new Date(data.start), new Date(data.end), false)); }
+        
         function renderCycleProgress(data, parent, id) { 
             const wrapper = createBarElement(data.label, null, null, true, `block-${id}`);
             parent.appendChild(wrapper);
         }
+        
         function renderCountdown(data, parent) { parent.innerHTML = `<div class="countdown-row"><span class="countdown-label">${data.label}</span><span class="countdown-time" id="cnt-${parent.id}">--</span></div>`; }
+        
         function renderTimer(data, parent, id) {
             const hrs = parseInt(data.hours)||0; const mins = parseInt(data.minutes)||0; const total = (hrs*60)+mins; const label = hrs>0 ? `${hrs}h ${mins}m` : `${mins}m`;
             parent.innerHTML = `<div class="timer-container"><div style="font-size:0.8em; opacity:0.7;">${data.label||'Timer'}</div><div class="timer-display" id="timer-display-${id}">00:00</div><div class="timer-controls"><button class="timer-btn" onclick="startTimer(${id}, ${total})">Start ${label}</button><button class="timer-btn" style="color:#eb5757" onclick="stopTimer(${id})">Stop</button></div></div>`;
@@ -163,7 +186,6 @@
             const now = new Date();
             const use24h = settings.use24h === true;
             blocks.forEach((block, bIdx) => {
-                // CLOCKS
                 if (block.type === 'world_clock') {
                     block.locations.forEach((loc, lIdx) => {
                         try {
@@ -187,7 +209,6 @@
                     });
                 }
                 
-                // DATE BUILDER
                 if (block.type === 'date_display') {
                     const mEl = document.getElementById(`date-main-block-${bIdx}`);
                     const sEl = document.getElementById(`date-sub-block-${bIdx}`);
@@ -199,7 +220,6 @@
                     }
                 }
 
-                // COUNTDOWN
                 if (block.type === 'countdown') {
                     const el = document.getElementById(`cnt-block-${bIdx}`);
                     if(el) {
@@ -223,38 +243,29 @@
                     }
                 }
 
-                // CYCLE PROGRESS
                 if (block.type === 'progress_cycle') {
                     const resetMode = block.resetMode || 'auto';
                     let anchor = new Date(block.anchor);
-                    
                     if (resetMode === 'manual') {
                         const restartTs = localStorage.getItem(`cycle_reset_block-${bIdx}`);
                         if(restartTs) anchor = new Date(parseInt(restartTs));
                     }
-
                     const days = parseFloat(block.days) || 1; 
                     const duration = days * 86400000;
                     const elapsed = now - anchor;
                     let pct = 0; let isDone = false;
-
                     if(elapsed < 0) pct = 0;
                     else {
                         if (resetMode === 'auto') pct = ((elapsed % duration) / duration) * 100;
-                        else {
-                            if (elapsed >= duration) { pct = 100; isDone = true; } 
-                            else { pct = (elapsed / duration) * 100; }
-                        }
+                        else { if (elapsed >= duration) { pct = 100; isDone = true; } else { pct = (elapsed / duration) * 100; } }
                     }
                     updateCycleBar(`block-${bIdx}`, pct, isDone);
                 }
                 
-                // TIMER
                 if (block.type === 'timer') updateTimerDisplay(bIdx);
             });
         }
 
-        // --- HELPERS ---
         function buildDateString(tokens, now) {
             return tokens.map(t => {
                 const type = (typeof t === 'string') ? t : t.type;
@@ -266,16 +277,13 @@
                     case 'date_num': return now.getDate();
                     case 'year': return now.getFullYear();
                     case 'week_num': return `Week ${getWeekNumber(now)}`;
-                    // UPDATE: Leap Year Logic
                     case 'day_year': 
                         const year = now.getFullYear();
                         const isLeap = (year % 4 === 0 && year % 100 > 0) || year % 400 === 0;
-                        const totalDays = isLeap ? 366 : 365;
-                        return `Day ${getDayOfYear(now)} of ${totalDays}`;
+                        return `Day ${getDayOfYear(now)} of ${isLeap ? 366 : 365}`;
                     case 'quarter': return `Q${Math.floor((now.getMonth() + 3) / 3)}`;
                     case 'separator': return '|';
                     case 'comma': return ',';
-                    case 'space': return ' ';
                     default: return '';
                 }
             }).join(' ');
