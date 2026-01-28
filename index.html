@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notion Widget V11</title>
+    <title>Notion Widget V12</title>
     <style>
         :root {
             --bg-color: #FFFFFF; --text-color: #37352F; --accent-color: #E3E2E0;
@@ -52,7 +52,7 @@
             background: none; border: 1px solid var(--text-color); 
             color: var(--text-color); font-size: 0.7rem; padding: 2px 6px; 
             border-radius: 4px; cursor: pointer; margin-left: 8px; 
-            opacity: 0.7; transition: opacity 0.2s;
+            opacity: 0.7; transition: opacity 0.2s; pointer-events: auto; /* Force click */
         }
         .cycle-reset-btn:hover { opacity: 1; background: var(--accent-color); }
 
@@ -132,7 +132,6 @@
             updateDynamicElements(data.blocks, settings);
         }
 
-        // --- NEW: LISTEN FOR UPDATES ---
         window.addEventListener('hashchange', render);
 
         function renderHeader(data, parent) { const el = document.createElement('div'); el.className = 'widget-header'; el.innerText = data.text; parent.appendChild(el); }
@@ -251,7 +250,10 @@
                     if(elapsed < 0) pct = 0;
                     else {
                         if (resetMode === 'auto') pct = ((elapsed % duration) / duration) * 100;
-                        else { if (elapsed >= duration) { pct = 100; isDone = true; } else { pct = (elapsed / duration) * 100; } }
+                        else { 
+                            if (elapsed >= duration) { pct = 100; isDone = true; } 
+                            else { pct = (elapsed / duration) * 100; } 
+                        }
                     }
                     updateCycleBar(`block-${bIdx}`, pct, isDone);
                 }
@@ -290,6 +292,7 @@
             if(bar && txt) { 
                 bar.style.width = `${pct}%`; 
                 if (isDone) {
+                    // Manual Reset Logic Fix
                     if(!document.getElementById(`reset-btn-${id}`)) {
                         txt.innerHTML = `Completed <button id="reset-btn-${id}" class="cycle-reset-btn" onclick="resetCycle('${id}')">↻ Reset</button>`;
                     }
