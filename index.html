@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notion Widget V10</title>
+    <title>Notion Widget V11</title>
     <style>
         :root {
             --bg-color: #FFFFFF; --text-color: #37352F; --accent-color: #E3E2E0;
@@ -76,7 +76,7 @@
             opacity: 0; transition: opacity 0.3s; cursor: pointer; text-decoration: none; font-size: 14px; z-index: 999;
         }
         body:hover #edit-btn { opacity: 0.4; } #edit-btn:hover { opacity: 1; }
-        .error { width: 100%; color: #eb5757; text-align: center; padding: 20px; }
+        .error { width: 100%; color: #eb5757; text-align: center; padding: 20px; font-size: 0.9em; opacity: 0.7; }
     </style>
 </head>
 <body>
@@ -98,7 +98,7 @@
 
         function render() {
             const data = getConfig();
-            if (!data) { container.innerHTML = `<div class="error">No settings found.<br>Use admin.html to generate a link.</div>`; return; }
+            if (!data) { container.innerHTML = `<div class="error">Waiting for settings...<br>(Use admin.html to generate)</div>`; return; }
             document.getElementById('edit-btn').href = window.location.href.replace('index.html', 'admin.html');
             
             const settings = data.settings || {};
@@ -131,6 +131,9 @@
             });
             updateDynamicElements(data.blocks, settings);
         }
+
+        // --- NEW: LISTEN FOR UPDATES ---
+        window.addEventListener('hashchange', render);
 
         function renderHeader(data, parent) { const el = document.createElement('div'); el.className = 'widget-header'; el.innerText = data.text; parent.appendChild(el); }
         
