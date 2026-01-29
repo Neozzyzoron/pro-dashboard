@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notion Widget V16</title>
+    <title>Notion Widget V18</title>
     <style>
         :root {
             --bg-color: #FFFFFF; --text-color: #37352F; --accent-color: #E3E2E0;
@@ -120,7 +120,7 @@
 
                 if (block.type === 'header') renderHeader(block, blockDiv);
                 else if (block.type === 'world_clock') renderWorldClock(block, blockDiv, settings);
-                else if (block.type === 'progress_group') renderProgressGroup(block, blockDiv);
+                else if (block.type === 'progress_group') renderProgressGroup(block, blockDiv, settings);
                 else if (block.type === 'progress_custom') renderCustomBar(block, blockDiv);
                 else if (block.type === 'progress_cycle') renderCycleProgress(block, blockDiv, index);
                 else if (block.type === 'countdown') renderCountdown(block, blockDiv);
@@ -147,7 +147,7 @@
         function renderDateDisplay(data, parent) { 
             parent.innerHTML = `<div class="date-display" id="date-main-${parent.id}"></div><div class="date-sub" id="date-sub-${parent.id}"></div>`; 
         }
-        function renderProgressGroup(data, parent) { 
+        function renderProgressGroup(data, parent, settings) { 
             data.items.forEach(item => { 
                 if (item.visible !== false) {
                     let dates;
@@ -157,19 +157,17 @@
                         end.setFullYear(end.getFullYear() + parseInt(item.expectancy || 80));
                         dates = { start, end };
                     } else {
-                        dates = getDatesForType(item.type);
+                        dates = getDatesForType(item.type, settings.weekStart);
                     }
                     if(dates) parent.appendChild(createBarElement(item.label, dates.start, dates.end, false)); 
                 }
             }); 
         }
         function renderCustomBar(data, parent) { parent.appendChild(createBarElement(data.label, new Date(data.start), new Date(data.end), false)); }
-        
         function renderCycleProgress(data, parent, id) { 
             const wrapper = createBarElement(data.label, null, null, true, `block-${id}`);
             parent.appendChild(wrapper);
         }
-        
         function renderCountdown(data, parent) { parent.innerHTML = `<div class="countdown-row"><span class="countdown-label">${data.label}</span><span class="countdown-time" id="cnt-${parent.id}">--</span></div>`; }
         function renderTimer(data, parent, id) {
             const hrs = parseInt(data.hours)||0; const mins = parseInt(data.minutes)||0; const total = (hrs*60)+mins; const label = hrs>0 ? `${hrs}h ${mins}m` : `${mins}m`;
@@ -241,17 +239,14 @@
                 if (block.type === 'progress_cycle') {
                     const resetMode = block.resetMode || 'auto';
                     let anchor = new Date(block.anchor);
-                    
                     if (resetMode === 'manual') {
                         const restartTs = localStorage.getItem(`cycle_reset_block-${bIdx}`);
                         if(restartTs) anchor = new Date(parseInt(restartTs));
                     }
-
                     const days = parseFloat(block.days) || 1; 
                     const duration = days * 86400000;
                     const elapsed = now - anchor;
                     let pct = 0; let isDone = false;
-
                     if(elapsed < 0) pct = 0;
                     else {
                         if (resetMode === 'auto') {
@@ -327,14 +322,37 @@
             return wrapper;
         }
 
-        function getDatesForType(type) {
+        // --- WEEK START LOGIC + QUARTER LOGIC ---
+        function getDatesForType(type, weekStart = 'monday') {
             const now = new Date(); const y = now.getFullYear(), m = now.getMonth();
             if (type === 'day') return { start: new Date(y, m, now.getDate()), end: new Date(y, m, now.getDate(), 23, 59, 59) };
-            if (type === 'week') { const d = now.getDay(); const diff = now.getDate() - d + (d === 0 ? -6 : 1); const s = new Date(now.setDate(diff)); s.setHours(0,0,0,0); const e = new Date(s); e.setDate(s.getDate() + 7); return { start: s, end: e }; }
+            
+            if (type === 'week') { 
+                const d = now.getDay();
+                let diff;
+                if (weekStart === 'monday') diff = now.getDate() - d + (d === 0 ? -6 : 1);
+                else diff = now.getDate() - d; 
+                
+                const s = new Date(now.setDate(diff)); s.setHours(0,0,0,0); 
+                const e = new Date(s); e.setDate(s.getDate() + 7); 
+                return { start: s, end: e }; 
+            }
+            
             if (type === 'month') return { start: new Date(y, m, 1), end: new Date(y, m + 1, 0) };
+            
+            // QUARTER LOGIC
+            if (type === 'quarter') {
+                const qStartMonth = Math.floor(m / 3) * 3;
+                return {
+                    start: new Date(y, qStartMonth, 1),
+                    end: new Date(y, qStartMonth + 3, 0)
+                };
+            }
+
             if (type === 'year') return { start: new Date(y, 0, 1), end: new Date(y + 1, 0, 1) };
             return null;
         }
+        
         function getWeekNumber(d) { d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7)); const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1)); return Math.ceil((((d - yearStart) / 86400000) + 1)/7); }
         function getDayOfYear(d) { const start = new Date(d.getFullYear(), 0, 0); const diff = d - start; return Math.floor(diff / (1000 * 60 * 60 * 24)); }
         
