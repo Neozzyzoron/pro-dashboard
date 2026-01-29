@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Widget Admin V14</title>
+    <title>Widget Admin V15</title>
     <style>
         /* RESET & CORE */
         * { box-sizing: border-box; }
@@ -10,18 +10,12 @@
         
         /* MAIN CONTAINER */
         .main-container { display: flex; flex-direction: row; width: 100%; height: 100vh; overflow: hidden; }
-        
-        /* LEFT PANEL (Editor) */
-        .panel-left { width: 50%; height: 100%; background: #fff; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; min-width: 320px; }
-        
-        /* RIGHT PANEL (Preview) */
+        .panel-left { width: 50%; height: 100%; background: #fff; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; min-width: 350px; }
         .panel-right { width: 50%; height: 100%; background: #eef0f2; padding: 20px; display: flex; flex-direction: column; min-width: 320px; }
         
-        /* HEADER & CONTENT */
         .sticky-header { padding: 20px 25px; background: white; border-bottom: 1px solid #f0f0f0; flex-shrink: 0; z-index: 10; }
         .scroll-content { padding: 20px 25px 40px 25px; overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; gap: 20px; }
         
-        /* PREVIEW FRAME */
         .preview-wrapper { flex-grow: 1; background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 1px solid #ccc; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
         .preview-toolbar { padding: 8px; background: #dfe1e6; border-bottom: 1px solid #ccc; display: flex; justify-content: center; align-items: center; height: 30px; flex-shrink: 0; }
         .preview-label { font-size: 0.75rem; font-weight: bold; color: #555; text-transform: uppercase; letter-spacing: 1px;}
@@ -33,7 +27,6 @@
         .dark-section { background: #34495e; padding: 15px; border-radius: 8px; color: white; flex-shrink: 0; }
         .dark-section h2 { color: rgba(255,255,255,0.7); border-bottom-color: rgba(255,255,255,0.2); }
         .dark-section label { color: rgba(255,255,255,0.9); }
-        
         .action-area { padding: 15px; background: #2c3e50; border-radius: 8px; color: white; }
         .link-box { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px; font-family: monospace; font-size: 0.75rem; word-break: break-all; margin-bottom: 10px; max-height: 45px; overflow-y: auto; color: #aeb6bf; }
         .action-btns { display: flex; gap: 8px; }
@@ -52,9 +45,9 @@
         .block-content { padding: 15px; border-top: 1px solid #f0f0f0; display: none; }
         .block-card.open .block-content { display: block; }
         
-        /* LIST ITEMS */
+        /* LIST STYLES */
         .sub-list { margin-bottom: 10px; border: 1px solid #eee; padding: 10px; border-radius: 4px; background: #fafafa; }
-        .sub-item { display: flex; gap: 5px; margin-bottom: 8px; align-items: flex-start; flex-wrap: wrap; border-bottom: 1px solid #eee; padding-bottom: 8px;} 
+        .sub-item { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px; flex-wrap: wrap; }
         .sub-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
         
         .sub-item select, .sub-item input { flex-grow: 1; width: auto; min-width: 0; } 
@@ -209,7 +202,7 @@
             } else { blocks = [{ type: 'header', text: 'Welcome' }]; }
         } catch(e) { console.error(e); }
         renderBlocks();
-        setTimeout(refreshPreview, 1000); // 1s delay to allow DOM render
+        setTimeout(refreshPreview, 1000);
     }
 
     // --- PREVIEW LOGIC ---
@@ -227,7 +220,7 @@
         const frame = document.getElementById('preview-frame');
         if(frame) frame.src = url;
         
-        generateLink(); // Update the copy box
+        generateLink();
     };
 
     window.updateBlockAndRender = (idx, key, val) => {
@@ -363,37 +356,48 @@
             const row = document.createElement('div');
             row.className = 'sub-item';
             
-            // New Layout: Search (Top) and Label (Bottom)
+            // --- TIME WIDGET FIX: Side-by-Side 50/50 ---
             const wrapper = document.createElement('div');
-            wrapper.style.width = '100%';
+            wrapper.style.display = 'flex'; 
+            wrapper.style.width = '100%'; 
+            wrapper.style.gap = '8px'; 
+            wrapper.style.alignItems = 'flex-start';
             
-            const searchRow = document.createElement('div');
-            searchRow.style.display = 'flex'; searchRow.style.gap = '5px'; searchRow.style.marginBottom = '5px';
-            
+            // 1. Search Box
             const searchWrap = document.createElement('div');
             searchWrap.className = 'city-search-wrapper';
+            searchWrap.style.flex = '1'; /* 50% width */
+            
             const input = document.createElement('input');
-            input.placeholder = "🔍 Search City/Timezone...";
+            input.placeholder = "🔍 Search City...";
+            
+            // UX FIX: Populate with selected city name if available
+            input.value = item._searchVal || ''; // Use temp storage or keep blank?
+            // Better UX: Show the city name if we have a timezone, but user can clear to search
+            if(item.label && !item._searchVal) input.placeholder = "Selected: " + item.label;
+            
             input.oninput = (e) => showCitySuggestions(e.target, bIdx, iIdx);
+            
             const results = document.createElement('div');
             results.className = 'city-results';
-            searchWrap.appendChild(input); searchWrap.appendChild(results);
             
+            searchWrap.appendChild(input); 
+            searchWrap.appendChild(results);
+            
+            // 2. Label Box
+            const lblInput = document.createElement('input');
+            lblInput.placeholder = "Label";
+            lblInput.style.flex = '1'; /* 50% width */
+            lblInput.value = item.label || '';
+            lblInput.oninput = (e) => { blocks[bIdx].locations[iIdx].label = e.target.value; updateState(); };
+            
+            // 3. Delete
             const del = document.createElement('button'); del.className = 'sub-btn-rem'; del.innerText = '×';
             del.onclick = () => removeSubItem(bIdx, 'locations', iIdx);
             
-            searchRow.appendChild(searchWrap);
-            searchRow.appendChild(del);
-            
-            const labelRow = document.createElement('div');
-            const lblInput = document.createElement('input');
-            lblInput.placeholder = "Label (e.g. Home)";
-            lblInput.value = item.label || '';
-            lblInput.oninput = (e) => { blocks[bIdx].locations[iIdx].label = e.target.value; updateState(); };
-            labelRow.appendChild(lblInput);
-            
-            wrapper.appendChild(searchRow);
-            wrapper.appendChild(labelRow);
+            wrapper.appendChild(searchWrap);
+            wrapper.appendChild(lblInput);
+            wrapper.appendChild(del);
             
             row.appendChild(wrapper);
             container.appendChild(row);
@@ -412,11 +416,17 @@
             div.className = 'city-result-item';
             div.innerText = city.name;
             div.onclick = () => {
-                if(!blocks[bIdx].locations[iIdx].label) blocks[bIdx].locations[iIdx].label = city.name.split(',')[0];
+                // UX FIX: Persist the search term
+                blocks[bIdx].locations[iIdx]._searchVal = city.name; 
+                
+                // UX FIX: Only auto-fill label if it was empty
+                if(!blocks[bIdx].locations[iIdx].label) {
+                    blocks[bIdx].locations[iIdx].label = city.name.split(',')[0];
+                }
+                
                 blocks[bIdx].locations[iIdx].timezone = city.tz;
-                input.value = ''; 
-                input.placeholder = "Selected: " + city.name;
-                updateState(); renderBlocks(); 
+                updateState(); 
+                renderBlocks(); // Re-render to show values
             };
             results.appendChild(div);
         });
@@ -437,17 +447,24 @@
             const row = document.createElement('div');
             row.className = 'sub-item';
             
+            // --- AUTO PROGRESS LAYOUT FIX ---
+            // Row 1: [Check] [Label] [Arrows]
             const topRow = document.createElement('div');
-            topRow.style.width = '100%'; topRow.style.display = 'flex'; topRow.style.gap = '5px'; topRow.style.alignItems = 'center';
+            topRow.style.width = '100%'; 
+            topRow.style.display = 'flex'; 
+            topRow.style.gap = '8px'; 
+            topRow.style.alignItems = 'center';
             
             const check = document.createElement('input'); 
             check.type = 'checkbox'; 
-            check.style.width = 'auto'; check.style.marginRight = '5px';
+            check.style.width = 'auto'; 
+            check.style.margin = '0'; // Reset margin
             check.checked = item.visible !== false;
             check.onchange = (e) => { blocks[bIdx].items[iIdx].visible = e.target.checked; updateState(); };
             
             const lbl = document.createElement('input'); 
-            lbl.style.flex = '1'; lbl.value = item.label;
+            lbl.style.flex = '1'; 
+            lbl.value = item.label;
             lbl.oninput = (e) => { blocks[bIdx].items[iIdx].label = e.target.value; updateState(); };
             
             const up = document.createElement('button'); up.className = 'sub-btn-mov'; up.innerText = '↑';
@@ -455,19 +472,41 @@
             const down = document.createElement('button'); down.className = 'sub-btn-mov'; down.innerText = '↓';
             down.onclick = () => moveItem(bIdx, 'items', iIdx, 1);
             
-            topRow.appendChild(check); topRow.appendChild(lbl); topRow.appendChild(up); topRow.appendChild(down);
+            topRow.appendChild(check); 
+            topRow.appendChild(lbl); 
+            topRow.appendChild(up); 
+            topRow.appendChild(down);
+            
             row.appendChild(topRow);
             
+            // Row 2: Life Inputs (Aligned Below)
             if(item.type === 'life') {
                 const lifeRow = document.createElement('div');
-                lifeRow.style.width = "100%"; lifeRow.style.display = "flex"; lifeRow.style.gap = "5px"; lifeRow.style.marginTop = "5px";
-                lifeRow.innerHTML = `<div style="flex:1"><label style="font-size:0.7em">Birth Date</label><input type="date" value="${item.dob || '1990-01-01'}" oninput="updateSubItem(${bIdx}, 'items', ${iIdx}, 'dob', this.value)"></div><div style="width:80px"><label style="font-size:0.7em">Exp. Age</label><input type="number" value="${item.expectancy || 80}" oninput="updateSubItem(${bIdx}, 'items', ${iIdx}, 'expectancy', this.value)"></div>`;
+                lifeRow.style.width = "100%"; 
+                lifeRow.style.display = "flex"; 
+                lifeRow.style.gap = "10px"; 
+                lifeRow.style.marginTop = "8px";
+                lifeRow.style.paddingLeft = "24px"; /* Indent to align with label text */
+                
+                // Date Field
+                const dateWrap = document.createElement('div');
+                dateWrap.style.flex = "1";
+                dateWrap.innerHTML = `<label style="font-size:0.7em; color:#888;">Birth Date</label><input type="date" value="${item.dob || '1990-01-01'}" oninput="updateSubItem(${bIdx}, 'items', ${iIdx}, 'dob', this.value)">`;
+                
+                // Age Field
+                const ageWrap = document.createElement('div');
+                ageWrap.style.width = "80px";
+                ageWrap.innerHTML = `<label style="font-size:0.7em; color:#888;">Exp. Age</label><input type="number" value="${item.expectancy || 80}" oninput="updateSubItem(${bIdx}, 'items', ${iIdx}, 'expectancy', this.value)">`;
+                
+                lifeRow.appendChild(dateWrap);
+                lifeRow.appendChild(ageWrap);
                 row.appendChild(lifeRow);
             }
             container.appendChild(row);
         });
     }
 
+    // ... (Rest of functions: renderDateList, updateState, updateBlock, etc. remain unchanged) ...
     function renderDateList(bIdx, key, array) {
         const container = document.getElementById(`sub-list-${key==='line1'?'l1':'l2'}-${bIdx}`);
         if(!container) return;
