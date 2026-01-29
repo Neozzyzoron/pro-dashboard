@@ -2,15 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Widget Admin V15</title>
+    <title>Widget Admin V16</title>
     <style>
         /* RESET & CORE */
         * { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f7f7f5; color: #37352f; }
         
-        /* MAIN CONTAINER */
+        /* MAIN LAYOUT */
         .main-container { display: flex; flex-direction: row; width: 100%; height: 100vh; overflow: hidden; }
-        .panel-left { width: 50%; height: 100%; background: #fff; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; min-width: 350px; }
+        .panel-left { width: 50%; height: 100%; background: #fff; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; min-width: 380px; }
         .panel-right { width: 50%; height: 100%; background: #eef0f2; padding: 20px; display: flex; flex-direction: column; min-width: 320px; }
         
         .sticky-header { padding: 20px 25px; background: white; border-bottom: 1px solid #f0f0f0; flex-shrink: 0; z-index: 10; }
@@ -21,12 +21,13 @@
         .preview-label { font-size: 0.75rem; font-weight: bold; color: #555; text-transform: uppercase; letter-spacing: 1px;}
         iframe { flex-grow: 1; width: 100%; border: none; background: white; display: block; }
 
-        /* UI ELEMENTS */
+        /* TYPOGRAPHY & UI */
         h1 { margin: 0; font-size: 1.5rem; letter-spacing: -0.5px; }
         h2 { font-size: 0.85rem; color: #999; text-transform: uppercase; margin: 0 0 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px; letter-spacing: 0.5px; font-weight: 600;}
         .dark-section { background: #34495e; padding: 15px; border-radius: 8px; color: white; flex-shrink: 0; }
         .dark-section h2 { color: rgba(255,255,255,0.7); border-bottom-color: rgba(255,255,255,0.2); }
         .dark-section label { color: rgba(255,255,255,0.9); }
+        
         .action-area { padding: 15px; background: #2c3e50; border-radius: 8px; color: white; }
         .link-box { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px; font-family: monospace; font-size: 0.75rem; word-break: break-all; margin-bottom: 10px; max-height: 45px; overflow-y: auto; color: #aeb6bf; }
         .action-btns { display: flex; gap: 8px; }
@@ -45,17 +46,19 @@
         .block-content { padding: 15px; border-top: 1px solid #f0f0f0; display: none; }
         .block-card.open .block-content { display: block; }
         
-        /* LIST STYLES */
+        /* SUB LIST ITEMS */
         .sub-list { margin-bottom: 10px; border: 1px solid #eee; padding: 10px; border-radius: 4px; background: #fafafa; }
-        .sub-item { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px; flex-wrap: wrap; }
+        .sub-item { display: flex; gap: 5px; margin-bottom: 8px; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px; }
         .sub-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
         
+        /* Common Inputs */
         .sub-item select, .sub-item input { flex-grow: 1; width: auto; min-width: 0; } 
+        
+        /* Buttons */
         .sub-btn-add { background: #e0e0e0; border: none; font-size: 0.7rem; padding: 4px 8px; cursor: pointer; border-radius: 3px; }
         .sub-btn-rem { background: #ffdede; color: red; border: none; cursor: pointer; width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
         .sub-btn-mov { background: #f0f0f0; border: 1px solid #ddd; cursor: pointer; width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: #666; flex-shrink: 0; }
 
-        /* TYPE COLORS */
         .type-header { border-left-color: #bdc3c7; } .type-world_clock { border-left-color: #1abc9c; }
         .type-date_display { border-left-color: #2ecc71; } .type-progress_group { border-left-color: #e67e22; }
         .type-progress_custom { border-left-color: #f1c40f; } .type-progress_cycle { border-left-color: #9b59b6; }
@@ -140,52 +143,96 @@
     let blocks = [];
     let dragSrc = null;
     
-    // CITY DATABASE
+    // FULL CITY DATABASE
     const cityDB = [
-        {name: "New York, USA", tz: "America/New_York"}, {name: "London, UK", tz: "Europe/London"},
-        {name: "Tokyo, Japan", tz: "Asia/Tokyo"}, {name: "Paris, France", tz: "Europe/Paris"},
-        {name: "Los Angeles, USA", tz: "America/Los_Angeles"}, {name: "Sydney, Australia", tz: "Australia/Sydney"},
-        {name: "Dubai, UAE", tz: "Asia/Dubai"}, {name: "Singapore", tz: "Asia/Singapore"},
-        {name: "Hong Kong", tz: "Asia/Hong_Kong"}, {name: "Berlin, Germany", tz: "Europe/Berlin"},
-        {name: "Toronto, Canada", tz: "America/Toronto"}, {name: "Mumbai, India", tz: "Asia/Kolkata"},
-        {name: "Shanghai, China", tz: "Asia/Shanghai"}, {name: "Chicago, USA", tz: "America/Chicago"},
-        {name: "Sao Paulo, Brazil", tz: "America/Sao_Paulo"}, {name: "Moscow, Russia", tz: "Europe/Moscow"},
-        {name: "Seoul, South Korea", tz: "Asia/Seoul"}, {name: "Istanbul, Turkey", tz: "Europe/Istanbul"},
-        {name: "Mexico City, Mexico", tz: "America/Mexico_City"}, {name: "Jakarta, Indonesia", tz: "Asia/Jakarta"},
-        {name: "Bangkok, Thailand", tz: "Asia/Bangkok"}, {name: "Cairo, Egypt", tz: "Africa/Cairo"},
-        {name: "Lagos, Nigeria", tz: "Africa/Lagos"}, {name: "Buenos Aires, Argentina", tz: "America/Argentina/Buenos_Aires"},
-        {name: "San Francisco, USA", tz: "America/Los_Angeles"}, {name: "Vancouver, Canada", tz: "America/Vancouver"},
-        {name: "Madrid, Spain", tz: "Europe/Madrid"}, {name: "Rome, Italy", tz: "Europe/Rome"},
-        {name: "Amsterdam, Netherlands", tz: "Europe/Amsterdam"}, {name: "Stockholm, Sweden", tz: "Europe/Stockholm"},
-        {name: "Warsaw, Poland", tz: "Europe/Warsaw"}, {name: "Vienna, Austria", tz: "Europe/Vienna"},
-        {name: "Prague, Czechia", tz: "Europe/Prague"}, {name: "Zurich, Switzerland", tz: "Europe/Zurich"},
-        {name: "Athens, Greece", tz: "Europe/Athens"}, {name: "Johannesburg, South Africa", tz: "Africa/Johannesburg"},
-        {name: "Nairobi, Kenya", tz: "Africa/Nairobi"}, {name: "Riyadh, Saudi Arabia", tz: "Asia/Riyadh"},
-        {name: "Tel Aviv, Israel", tz: "Asia/Jerusalem"}, {name: "Tehran, Iran", tz: "Asia/Tehran"},
-        {name: "New Delhi, India", tz: "Asia/Kolkata"}, {name: "Beijing, China", tz: "Asia/Shanghai"},
-        {name: "Taipei, Taiwan", tz: "Asia/Taipei"}, {name: "Kuala Lumpur, Malaysia", tz: "Asia/Kuala_Lumpur"},
-        {name: "Manila, Philippines", tz: "Asia/Manila"}, {name: "Ho Chi Minh City, Vietnam", tz: "Asia/Ho_Chi_Minh"},
-        {name: "Melbourne, Australia", tz: "Australia/Melbourne"}, {name: "Brisbane, Australia", tz: "Australia/Brisbane"},
-        {name: "Auckland, New Zealand", tz: "Pacific/Auckland"}, {name: "Honolulu, USA", tz: "Pacific/Honolulu"},
-        {name: "Anchorage, USA", tz: "America/Anchorage"}, {name: "Denver, USA", tz: "America/Denver"},
-        {name: "Phoenix, USA", tz: "America/Phoenix"}, {name: "Dallas, USA", tz: "America/Chicago"},
-        {name: "Miami, USA", tz: "America/New_York"}, {name: "Montreal, Canada", tz: "America/Toronto"},
-        {name: "Bogota, Colombia", tz: "America/Bogota"}, {name: "Lima, Peru", tz: "America/Lima"},
-        {name: "Santiago, Chile", tz: "America/Santiago"}, {name: "Caracas, Venezuela", tz: "America/Caracas"}
+        {name: "Abidjan, Ivory Coast", tz: "Africa/Abidjan"}, {name: "Abu Dhabi, UAE", tz: "Asia/Dubai"},
+        {name: "Accra, Ghana", tz: "Africa/Accra"}, {name: "Addis Ababa, Ethiopia", tz: "Africa/Addis_Ababa"},
+        {name: "Adelaide, Australia", tz: "Australia/Adelaide"}, {name: "Algiers, Algeria", tz: "Africa/Algiers"},
+        {name: "Almaty, Kazakhstan", tz: "Asia/Almaty"}, {name: "Amman, Jordan", tz: "Asia/Amman"},
+        {name: "Amsterdam, Netherlands", tz: "Europe/Amsterdam"}, {name: "Anchorage, USA", tz: "America/Anchorage"},
+        {name: "Ankara, Turkey", tz: "Europe/Istanbul"}, {name: "Antananarivo, Madagascar", tz: "Indian/Antananarivo"},
+        {name: "Athens, Greece", tz: "Europe/Athens"}, {name: "Atlanta, USA", tz: "America/New_York"},
+        {name: "Auckland, New Zealand", tz: "Pacific/Auckland"}, {name: "Austin, USA", tz: "America/Chicago"},
+        {name: "Baghdad, Iraq", tz: "Asia/Baghdad"}, {name: "Baku, Azerbaijan", tz: "Asia/Baku"},
+        {name: "Bangkok, Thailand", tz: "Asia/Bangkok"}, {name: "Barcelona, Spain", tz: "Europe/Madrid"},
+        {name: "Beijing, China", tz: "Asia/Shanghai"}, {name: "Beirut, Lebanon", tz: "Asia/Beirut"},
+        {name: "Belgrade, Serbia", tz: "Europe/Belgrade"}, {name: "Bengaluru, India", tz: "Asia/Kolkata"},
+        {name: "Berlin, Germany", tz: "Europe/Berlin"}, {name: "Bogota, Colombia", tz: "America/Bogota"},
+        {name: "Boston, USA", tz: "America/New_York"}, {name: "Brasilia, Brazil", tz: "America/Sao_Paulo"},
+        {name: "Brisbane, Australia", tz: "Australia/Brisbane"}, {name: "Brussels, Belgium", tz: "Europe/Brussels"},
+        {name: "Bucharest, Romania", tz: "Europe/Bucharest"}, {name: "Budapest, Hungary", tz: "Europe/Budapest"},
+        {name: "Buenos Aires, Argentina", tz: "America/Argentina/Buenos_Aires"}, {name: "Cairo, Egypt", tz: "Africa/Cairo"},
+        {name: "Calgary, Canada", tz: "America/Edmonton"}, {name: "Canberra, Australia", tz: "Australia/Sydney"},
+        {name: "Cape Town, South Africa", tz: "Africa/Johannesburg"}, {name: "Caracas, Venezuela", tz: "America/Caracas"},
+        {name: "Casablanca, Morocco", tz: "Africa/Casablanca"}, {name: "Chennai, India", tz: "Asia/Kolkata"},
+        {name: "Chicago, USA", tz: "America/Chicago"}, {name: "Copenhagen, Denmark", tz: "Europe/Copenhagen"},
+        {name: "Dakar, Senegal", tz: "Africa/Dakar"}, {name: "Dallas, USA", tz: "America/Chicago"},
+        {name: "Dar es Salaam, Tanzania", tz: "Africa/Dar_es_Salaam"}, {name: "Darwin, Australia", tz: "Australia/Darwin"},
+        {name: "Delhi (New Delhi), India", tz: "Asia/Kolkata"}, {name: "Denpasar, Indonesia", tz: "Asia/Makassar"},
+        {name: "Denver, USA", tz: "America/Denver"}, {name: "Detroit, USA", tz: "America/Detroit"},
+        {name: "Dhaka, Bangladesh", tz: "Asia/Dhaka"}, {name: "Doha, Qatar", tz: "Asia/Qatar"},
+        {name: "Dubai, UAE", tz: "Asia/Dubai"}, {name: "Dublin, Ireland", tz: "Europe/Dublin"},
+        {name: "Edmonton, Canada", tz: "America/Edmonton"}, {name: "Frankfurt, Germany", tz: "Europe/Berlin"},
+        {name: "Geneva, Switzerland", tz: "Europe/Zurich"}, {name: "Guatemala City, Guatemala", tz: "America/Guatemala"},
+        {name: "Halifax, Canada", tz: "America/Halifax"}, {name: "Hanoi, Vietnam", tz: "Asia/Ho_Chi_Minh"},
+        {name: "Harare, Zimbabwe", tz: "Africa/Harare"}, {name: "Havana, Cuba", tz: "America/Havana"},
+        {name: "Helsinki, Finland", tz: "Europe/Helsinki"}, {name: "Hong Kong", tz: "Asia/Hong_Kong"},
+        {name: "Honolulu, USA", tz: "Pacific/Honolulu"}, {name: "Houston, USA", tz: "America/Chicago"},
+        {name: "Indianapolis, USA", tz: "America/Indiana/Indianapolis"}, {name: "Islamabad, Pakistan", tz: "Asia/Karachi"},
+        {name: "Istanbul, Turkey", tz: "Europe/Istanbul"}, {name: "Jakarta, Indonesia", tz: "Asia/Jakarta"},
+        {name: "Jerusalem, Israel", tz: "Asia/Jerusalem"}, {name: "Johannesburg, South Africa", tz: "Africa/Johannesburg"},
+        {name: "Kabul, Afghanistan", tz: "Asia/Kabul"}, {name: "Kampala, Uganda", tz: "Africa/Kampala"},
+        {name: "Karachi, Pakistan", tz: "Asia/Karachi"}, {name: "Kathmandu, Nepal", tz: "Asia/Kathmandu"},
+        {name: "Khartoum, Sudan", tz: "Africa/Khartoum"}, {name: "Kingston, Jamaica", tz: "America/Jamaica"},
+        {name: "Kinshasa, DRC", tz: "Africa/Kinshasa"}, {name: "Kolkata, India", tz: "Asia/Kolkata"},
+        {name: "Kuala Lumpur, Malaysia", tz: "Asia/Kuala_Lumpur"}, {name: "Kuwait City, Kuwait", tz: "Asia/Kuwait"},
+        {name: "Kyiv, Ukraine", tz: "Europe/Kyiv"}, {name: "Lagos, Nigeria", tz: "Africa/Lagos"},
+        {name: "Lahore, Pakistan", tz: "Asia/Karachi"}, {name: "Las Vegas, USA", tz: "America/Los_Angeles"},
+        {name: "Lima, Peru", tz: "America/Lima"}, {name: "Lisbon, Portugal", tz: "Europe/Lisbon"},
+        {name: "London, UK", tz: "Europe/London"}, {name: "Los Angeles, USA", tz: "America/Los_Angeles"},
+        {name: "Luanda, Angola", tz: "Africa/Luanda"}, {name: "Madrid, Spain", tz: "Europe/Madrid"},
+        {name: "Manila, Philippines", tz: "Asia/Manila"}, {name: "Melbourne, Australia", tz: "Australia/Melbourne"},
+        {name: "Mexico City, Mexico", tz: "America/Mexico_City"}, {name: "Miami, USA", tz: "America/New_York"},
+        {name: "Minneapolis, USA", tz: "America/Chicago"}, {name: "Minsk, Belarus", tz: "Europe/Minsk"},
+        {name: "Montevideo, Uruguay", tz: "America/Montevideo"}, {name: "Montreal, Canada", tz: "America/Toronto"},
+        {name: "Moscow, Russia", tz: "Europe/Moscow"}, {name: "Mumbai, India", tz: "Asia/Kolkata"},
+        {name: "Munich, Germany", tz: "Europe/Berlin"}, {name: "Muscat, Oman", tz: "Asia/Muscat"},
+        {name: "Nairobi, Kenya", tz: "Africa/Nairobi"}, {name: "New Delhi, India", tz: "Asia/Kolkata"},
+        {name: "New Orleans, USA", tz: "America/Chicago"}, {name: "New York, USA", tz: "America/New_York"},
+        {name: "Oslo, Norway", tz: "Europe/Oslo"}, {name: "Ottawa, Canada", tz: "America/Toronto"},
+        {name: "Panama, Panama", tz: "America/Panama"}, {name: "Paris, France", tz: "Europe/Paris"},
+        {name: "Perth, Australia", tz: "Australia/Perth"}, {name: "Philadelphia, USA", tz: "America/New_York"},
+        {name: "Phoenix, USA", tz: "America/Phoenix"}, {name: "Prague, Czechia", tz: "Europe/Prague"},
+        {name: "Pune, India", tz: "Asia/Kolkata"}, {name: "Pyongyang, North Korea", tz: "Asia/Pyongyang"},
+        {name: "Quito, Ecuador", tz: "America/Guayaquil"}, {name: "Reykjavik, Iceland", tz: "Atlantic/Reykjavik"},
+        {name: "Rio de Janeiro, Brazil", tz: "America/Sao_Paulo"}, {name: "Riyadh, Saudi Arabia", tz: "Asia/Riyadh"},
+        {name: "Rome, Italy", tz: "Europe/Rome"}, {name: "Salt Lake City, USA", tz: "America/Denver"},
+        {name: "San Francisco, USA", tz: "America/Los_Angeles"}, {name: "San Jose, USA", tz: "America/Los_Angeles"},
+        {name: "San Juan, Puerto Rico", tz: "America/Puerto_Rico"}, {name: "San Salvador, El Salvador", tz: "America/El_Salvador"},
+        {name: "Santiago, Chile", tz: "America/Santiago"}, {name: "Santo Domingo, Dominican Republic", tz: "America/Santo_Domingo"},
+        {name: "Sao Paulo, Brazil", tz: "America/Sao_Paulo"}, {name: "Seattle, USA", tz: "America/Los_Angeles"},
+        {name: "Seoul, South Korea", tz: "Asia/Seoul"}, {name: "Shanghai, China", tz: "Asia/Shanghai"},
+        {name: "Singapore, Singapore", tz: "Asia/Singapore"}, {name: "Sofia, Bulgaria", tz: "Europe/Sofia"},
+        {name: "Stockholm, Sweden", tz: "Europe/Stockholm"}, {name: "Sydney, Australia", tz: "Australia/Sydney"},
+        {name: "Taipei, Taiwan", tz: "Asia/Taipei"}, {name: "Tallinn, Estonia", tz: "Europe/Tallinn"},
+        {name: "Tashkent, Uzbekistan", tz: "Asia/Tashkent"}, {name: "Tehran, Iran", tz: "Asia/Tehran"},
+        {name: "Tel Aviv, Israel", tz: "Asia/Jerusalem"}, {name: "Tokyo, Japan", tz: "Asia/Tokyo"},
+        {name: "Toronto, Canada", tz: "America/Toronto"}, {name: "Tunis, Tunisia", tz: "Africa/Tunis"},
+        {name: "Vancouver, Canada", tz: "America/Vancouver"}, {name: "Vienna, Austria", tz: "Europe/Vienna"},
+        {name: "Vladivostok, Russia", tz: "Asia/Vladivostok"}, {name: "Warsaw, Poland", tz: "Europe/Warsaw"},
+        {name: "Washington DC, USA", tz: "America/New_York"}, {name: "Wellington, New Zealand", tz: "Pacific/Auckland"},
+        {name: "Winnipeg, Canada", tz: "America/Winnipeg"}, {name: "Yangon, Myanmar", tz: "Asia/Yangon"},
+        {name: "Yerevan, Armenia", tz: "Asia/Yerevan"}, {name: "Zagreb, Croatia", tz: "Europe/Zagreb"},
+        {name: "Zurich, Switzerland", tz: "Europe/Zurich"}
     ];
 
     // DATE TOKENS
     const dateTokens = [
-        {val: 'day_name_full', txt: 'Day Name (Monday)'},
-        {val: 'day_name_short', txt: 'Day Name (Mon)'},
-        {val: 'date_num', txt: 'Date (28)'},
-        {val: 'month_full', txt: 'Month (January)'},
-        {val: 'month_short', txt: 'Month (Jan)'},
-        {val: 'month_num', txt: 'Month Number (01)'},
-        {val: 'year', txt: 'Year (2026)'},
-        {val: 'week_num', txt: 'Week Number'},
-        {val: 'day_year', txt: 'Day of Year'},
-        {val: 'quarter', txt: 'Quarter (Q1)'},
+        {val: 'day_name_full', txt: 'Day Name (Monday)'}, {val: 'day_name_short', txt: 'Day Name (Mon)'},
+        {val: 'date_num', txt: 'Date (28)'}, {val: 'month_full', txt: 'Month (January)'},
+        {val: 'month_short', txt: 'Month (Jan)'}, {val: 'month_num', txt: 'Month Number (01)'},
+        {val: 'year', txt: 'Year (2026)'}, {val: 'week_num', txt: 'Week Number'},
+        {val: 'day_year', txt: 'Day of Year'}, {val: 'quarter', txt: 'Quarter (Q1)'},
         {val: 'separator', txt: 'Separator (|)'}
     ];
 
@@ -215,6 +262,7 @@
         else if(baseUrl.endsWith('/')) baseUrl += 'index.html';
         else baseUrl += '/index.html';
         
+        // V6 Timestamp Method
         const url = `${baseUrl}?t=${Date.now()}#${encoded}`;
         
         const frame = document.getElementById('preview-frame');
@@ -366,15 +414,13 @@
             // 1. Search Box
             const searchWrap = document.createElement('div');
             searchWrap.className = 'city-search-wrapper';
-            searchWrap.style.flex = '1'; /* 50% width */
+            searchWrap.style.flex = '1';
             
             const input = document.createElement('input');
             input.placeholder = "🔍 Search City...";
             
-            // UX FIX: Populate with selected city name if available
-            input.value = item._searchVal || ''; // Use temp storage or keep blank?
-            // Better UX: Show the city name if we have a timezone, but user can clear to search
-            if(item.label && !item._searchVal) input.placeholder = "Selected: " + item.label;
+            // UX FIX: Persist text so user knows what's selected
+            input.value = item._searchVal || ''; 
             
             input.oninput = (e) => showCitySuggestions(e.target, bIdx, iIdx);
             
@@ -387,7 +433,7 @@
             // 2. Label Box
             const lblInput = document.createElement('input');
             lblInput.placeholder = "Label";
-            lblInput.style.flex = '1'; /* 50% width */
+            lblInput.style.flex = '1'; 
             lblInput.value = item.label || '';
             lblInput.oninput = (e) => { blocks[bIdx].locations[iIdx].label = e.target.value; updateState(); };
             
@@ -416,17 +462,15 @@
             div.className = 'city-result-item';
             div.innerText = city.name;
             div.onclick = () => {
-                // UX FIX: Persist the search term
-                blocks[bIdx].locations[iIdx]._searchVal = city.name; 
+                // UX FIX: Update search box to show selection
+                blocks[bIdx].locations[iIdx]._searchVal = city.name;
                 
-                // UX FIX: Only auto-fill label if it was empty
-                if(!blocks[bIdx].locations[iIdx].label) {
-                    blocks[bIdx].locations[iIdx].label = city.name.split(',')[0];
-                }
+                // UX FIX: Always overwrite label with City Name
+                blocks[bIdx].locations[iIdx].label = city.name.split(',')[0];
                 
                 blocks[bIdx].locations[iIdx].timezone = city.tz;
                 updateState(); 
-                renderBlocks(); // Re-render to show values
+                renderBlocks(); 
             };
             results.appendChild(div);
         });
@@ -446,67 +490,54 @@
         array.forEach((item, iIdx) => {
             const row = document.createElement('div');
             row.className = 'sub-item';
+            row.style.flexWrap = 'wrap'; /* Allow wrapping for Life row */
             
             // --- AUTO PROGRESS LAYOUT FIX ---
-            // Row 1: [Check] [Label] [Arrows]
-            const topRow = document.createElement('div');
-            topRow.style.width = '100%'; 
-            topRow.style.display = 'flex'; 
-            topRow.style.gap = '8px'; 
-            topRow.style.alignItems = 'center';
+            // Main Row: [Check] [Label] [Life Inputs if needed] [Arrows]
             
             const check = document.createElement('input'); 
             check.type = 'checkbox'; 
-            check.style.width = 'auto'; 
-            check.style.margin = '0'; // Reset margin
+            check.style.width = 'auto'; check.style.margin = '0 8px 0 0';
             check.checked = item.visible !== false;
             check.onchange = (e) => { blocks[bIdx].items[iIdx].visible = e.target.checked; updateState(); };
             
             const lbl = document.createElement('input'); 
             lbl.style.flex = '1'; 
+            lbl.style.minWidth = '80px';
             lbl.value = item.label;
             lbl.oninput = (e) => { blocks[bIdx].items[iIdx].label = e.target.value; updateState(); };
             
+            row.appendChild(check);
+            row.appendChild(lbl);
+
+            // LIFE INPUTS (Inline if possible, otherwise wrap)
+            if(item.type === 'life') {
+                const lifeGroup = document.createElement('div');
+                lifeGroup.style.display = 'flex'; 
+                lifeGroup.style.gap = '5px';
+                lifeGroup.style.flex = '2'; /* Take more space */
+                lifeGroup.style.minWidth = '200px'; 
+                
+                lifeGroup.innerHTML = `
+                    <input type="date" title="Birth Date" value="${item.dob || '1990-01-01'}" oninput="updateSubItem(${bIdx}, 'items', ${iIdx}, 'dob', this.value)" style="flex:2">
+                    <input type="number" title="Exp Age" value="${item.expectancy || 80}" oninput="updateSubItem(${bIdx}, 'items', ${iIdx}, 'expectancy', this.value)" style="flex:1; min-width:50px;">
+                `;
+                row.appendChild(lifeGroup);
+            }
+
+            // ARROWS
             const up = document.createElement('button'); up.className = 'sub-btn-mov'; up.innerText = '↑';
             up.onclick = () => moveItem(bIdx, 'items', iIdx, -1);
             const down = document.createElement('button'); down.className = 'sub-btn-mov'; down.innerText = '↓';
             down.onclick = () => moveItem(bIdx, 'items', iIdx, 1);
             
-            topRow.appendChild(check); 
-            topRow.appendChild(lbl); 
-            topRow.appendChild(up); 
-            topRow.appendChild(down);
+            row.appendChild(up);
+            row.appendChild(down);
             
-            row.appendChild(topRow);
-            
-            // Row 2: Life Inputs (Aligned Below)
-            if(item.type === 'life') {
-                const lifeRow = document.createElement('div');
-                lifeRow.style.width = "100%"; 
-                lifeRow.style.display = "flex"; 
-                lifeRow.style.gap = "10px"; 
-                lifeRow.style.marginTop = "8px";
-                lifeRow.style.paddingLeft = "24px"; /* Indent to align with label text */
-                
-                // Date Field
-                const dateWrap = document.createElement('div');
-                dateWrap.style.flex = "1";
-                dateWrap.innerHTML = `<label style="font-size:0.7em; color:#888;">Birth Date</label><input type="date" value="${item.dob || '1990-01-01'}" oninput="updateSubItem(${bIdx}, 'items', ${iIdx}, 'dob', this.value)">`;
-                
-                // Age Field
-                const ageWrap = document.createElement('div');
-                ageWrap.style.width = "80px";
-                ageWrap.innerHTML = `<label style="font-size:0.7em; color:#888;">Exp. Age</label><input type="number" value="${item.expectancy || 80}" oninput="updateSubItem(${bIdx}, 'items', ${iIdx}, 'expectancy', this.value)">`;
-                
-                lifeRow.appendChild(dateWrap);
-                lifeRow.appendChild(ageWrap);
-                row.appendChild(lifeRow);
-            }
             container.appendChild(row);
         });
     }
 
-    // ... (Rest of functions: renderDateList, updateState, updateBlock, etc. remain unchanged) ...
     function renderDateList(bIdx, key, array) {
         const container = document.getElementById(`sub-list-${key==='line1'?'l1':'l2'}-${bIdx}`);
         if(!container) return;
@@ -533,7 +564,7 @@
     window.updateBlock = (i, k, v) => { blocks[i][k] = v; updateState(); };
     window.updateSubItem = (bI, k, iI, f, v) => { blocks[bI][k][iI][f] = v; updateState(); };
     window.addSubItem = (bI, k) => { 
-        if(k==='locations') blocks[bI][k].push({label:'New City', timezone:'UTC'});
+        if(k==='locations') blocks[bI][k].push({label:'', timezone:''}); // UX: Empty label/tz
         if(k==='items') blocks[bI][k].push({label:'New Bar', type:'month'});
         renderBlocks(); updateState();
     };
@@ -551,7 +582,7 @@
     window.addBlock = (t) => {
         let b = { type: t };
         if(t=='header') b.text='Title';
-        if(t=='world_clock') b.locations=[{label:'London',timezone:'Europe/London'}];
+        if(t=='world_clock') b.locations=[{label:'London',timezone:'Europe/London', _searchVal:'London, UK'}];
         if(t=='date_display') {
             b.line1=['day_name_full', 'month_full', 'date_num'];
             b.line2=['week_num', 'separator', 'quarter'];
